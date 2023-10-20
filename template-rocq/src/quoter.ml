@@ -482,6 +482,10 @@ struct
     let (fn,_) = quote_term_remember (fun _ () -> ()) (fun _ _ () -> ()) in
     fst (fn () env sigma trm)
 
+  let quote_untyped_term env sigma trm =
+    let (fn,_) = quote_term_remember (fun _ () -> ()) (fun _ _ () -> ()) in
+    fst (fn () env sigma trm)
+
   let quote_mind_decl env sigma trm mib =
     let (_,fn) = quote_term_remember (fun _ () -> ()) (fun _ _ () -> ()) in
     let (_, indd, _) = fn () env sigma trm mib in indd
