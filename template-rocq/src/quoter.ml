@@ -482,8 +482,27 @@ struct
     let (fn,_) = quote_term_remember (fun _ () -> ()) (fun _ _ () -> ()) in
     fst (fn () env sigma trm)
 
+  let quote_untyped_term_remember
+      (add_constant : KerName.t -> 'a -> 'a)
+      (add_inductive : Names.inductive -> Declarations.mutual_inductive_body -> 'a -> 'a) =
+    let quote_term (acc : 'a) env sigma trm =
+      let aux acc env trm =
+      match trm with
+      | Glob_term.GVar v -> (Q.mkVar (Q.quote_ident v), acc)
+      (* | Glob_term.GEvar (n,args) -> *)
+      (*   let args = Evd.expand_existential0 sigma (n, args) in *)
+      (*         let (args',acc) = quote_terms quote_term acc env sigma (Array.of_list args) in *)
+      (*    (Q.mkEvar (Q.quote_int (Evar.repr n)) args', acc) *)
+      | _ -> failwith "not supported by TemplateCoq"
+      in
+      aux acc env trm
+
+    in ((fun acc env -> quote_term acc (false, env)),
+        (fun acc env t mib ->
+        failwith "not supported"))
+
   let quote_untyped_term env sigma trm =
-    let (fn,_) = quote_term_remember (fun _ () -> ()) (fun _ _ () -> ()) in
+    let (fn,_) = quote_untyped_term_remember (fun _ () -> ()) (fun _ _ () -> ()) in
     fst (fn () env sigma trm)
 
   let quote_mind_decl env sigma trm mib =
