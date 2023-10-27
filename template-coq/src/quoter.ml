@@ -485,17 +485,33 @@ struct
   let quote_untyped_term_remember
       (add_constant : KerName.t -> 'a -> 'a)
       (add_inductive : Names.inductive -> Declarations.mutual_inductive_body -> 'a -> 'a) =
-    let quote_term (acc : 'a) env sigma trm =
+    let rec quote_term (acc : 'a) env sigma trm =
       let aux acc env trm =
       match trm with
+      | Glob_term.GRef (n, _) ->
+         (
+           match n with
+           | GlobRef.VarRef _ -> failwith "not supported by TemplateCoq"
+           | GlobRef.ConstRef c ->
+              let kn = Constant.canonical c in
+              (Q.mkConst (Q.quote_kn kn) (Q.quote_univ_instance Univ.Instance.empty), add_constant kn acc)
+           | GlobRef.IndRef mind ->
+              (Q.mkInd (quote_inductive' mind) (Q.quote_univ_instance Univ.Instance.empty),
+               let mib = Environ.lookup_mind (fst mind) (snd env) in
+               add_inductive mind mib acc)
+           | GlobRef.ConstructRef (mind, c) ->
+              let mib = Environ.lookup_mind (fst mind) (snd env) in
+              (Q.mkConstruct (quote_inductive' mind, Q.quote_int (c - 1)) (Q.quote_univ_instance Univ.Instance.empty),
+               add_inductive mind mib acc)
+         )
       | Glob_term.GVar v -> (Q.mkVar (Q.quote_ident v), acc)
-      (* | Glob_term.GEvar (n,args) -> *)
-      (*   let args = Evd.expand_existential0 sigma (n, args) in *)
-      (*         let (args',acc) = quote_terms quote_term acc env sigma (Array.of_list args) in *)
-      (*    (Q.mkEvar (Q.quote_int (Evar.repr n)) args', acc) *)
+      | Glob_term.GApp (f,xs) ->
+        let (f',acc) = quote_term acc env sigma f in
+        let (xs',acc) = quote_terms quote_term acc env sigma (CArray.rev_of_list xs) in
+        (Q.mkApp f' xs', acc)
       | _ -> failwith "not supported by TemplateCoq"
       in
-      aux acc env trm
+      aux acc env (DAst.get trm)
 
     in ((fun acc env -> quote_term acc (false, env)),
         (fun acc env t mib ->
