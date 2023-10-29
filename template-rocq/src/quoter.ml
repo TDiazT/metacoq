@@ -504,11 +504,30 @@ struct
               (Q.mkConstruct (quote_inductive' mind, Q.quote_int (c - 1)) (Q.quote_univ_instance Univ.Instance.empty),
                add_inductive mind mib acc)
          )
+
       | Glob_term.GVar v -> (Q.mkVar (Q.quote_ident v), acc)
+
       | Glob_term.GApp (f,xs) ->
         let (f',acc) = quote_term acc env sigma f in
         let (xs',acc) = quote_terms quote_term acc env sigma (CArray.rev_of_list xs) in
         (Q.mkApp f' xs', acc)
+
+      (* NOTE: Relevance set to Relevant always *)
+      | Glob_term.GLambda (n, _, t, b) ->
+         let binder : Name.t Context.binder_annot = {binder_name = n ; binder_relevance = Sorts.Relevant } in
+         let (t',acc) = quote_term acc env sigma t in
+         (* let (b',acc) = quote_term acc (push_rel (toDecl (n, None, t)) env) sigma b in *)
+         let (b',acc) = quote_term acc env sigma b in
+        (Q.mkLambda (Q.quote_aname binder) t' b', acc)
+
+      (* NOTE: Relevance set to Relevant always *)
+      | Glob_term.GProd (n, _, t, b) ->
+         let binder : Name.t Context.binder_annot = {binder_name = n ; binder_relevance = Sorts.Relevant } in
+         let (t',acc) = quote_term acc env sigma t in
+         (* let env = push_rel (toDecl (n, None, t)) env in *)
+         let (b',acc) = quote_term acc env sigma b in
+         (Q.mkProd (Q.quote_aname binder) t' b', acc)
+
       | _ -> failwith "not supported by TemplateCoq"
       in
       aux acc env (DAst.get trm)
