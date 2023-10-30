@@ -514,7 +514,7 @@ struct
 
       (* NOTE: Relevance set to Relevant always *)
       | Glob_term.GLambda (n, _, t, b) ->
-         let binder : Name.t Context.binder_annot = {binder_name = n ; binder_relevance = Sorts.Relevant } in
+         let binder = Context.make_annot n Sorts.Relevant in
          let (t',acc) = quote_term acc env sigma t in
          (* let (b',acc) = quote_term acc (push_rel (toDecl (n, None, t)) env) sigma b in *)
          let (b',acc) = quote_term acc env sigma b in
@@ -522,7 +522,7 @@ struct
 
       (* NOTE: Relevance set to Relevant always *)
       | Glob_term.GProd (n, _, t, b) ->
-         let binder : Name.t Context.binder_annot = {binder_name = n ; binder_relevance = Sorts.Relevant } in
+         let binder = Context.make_annot n Sorts.Relevant in
          let (t',acc) = quote_term acc env sigma t in
          (* let env = push_rel (toDecl (n, None, t)) env in *)
          let (b',acc) = quote_term acc env sigma b in
@@ -532,7 +532,7 @@ struct
          (
            match ty with
            | Some ty' ->
-              let binder : Name.t Context.binder_annot = {binder_name = name ; binder_relevance = Sorts.Relevant } in
+              let binder = Context.make_annot name Sorts.Relevant in
 	      let (exp',acc) = quote_term acc env sigma exp in
               (* What to do if missing type annotation ? *)
 	      let (ty',acc) = quote_term acc env sigma ty' in
@@ -556,15 +556,16 @@ struct
                  (* | GUniv lvl -> Sorts.type1 *)
                  | _ -> failwith "not supported by TemplateCoq"
                )
+            (* NOTE : Probably a better option ? *)
             | UAnonymous rigid -> Sorts.type1
            ) in
          (Q.mkSort (Q.quote_sort sort), acc)
 
       | Glob_term.GCast (c,k,t) ->
-              let (c',acc) = quote_term acc env sigma c in
-              let (t',acc) = quote_term acc env sigma t in
-              let k' = Q.quote_cast_kind k in
-              (Q.mkCast c' k' t', acc)
+         let (c',acc) = quote_term acc env sigma c in
+         let (t',acc) = quote_term acc env sigma t in
+         let k' = Q.quote_cast_kind k in
+         (Q.mkCast c' k' t', acc)
 
       | Glob_term.GInt i -> (Q.mkInt (Q.quote_int63 i), acc)
       | Glob_term.GFloat f -> (Q.mkFloat (Q.quote_float64 f), acc)
