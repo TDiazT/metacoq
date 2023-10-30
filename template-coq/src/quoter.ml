@@ -560,6 +560,12 @@ struct
            ) in
          (Q.mkSort (Q.quote_sort sort), acc)
 
+      | Glob_term.GCast (c,k,t) ->
+              let (c',acc) = quote_term acc env sigma c in
+              let (t',acc) = quote_term acc env sigma t in
+              let k' = Q.quote_cast_kind k in
+              (Q.mkCast c' k' t', acc)
+
       | _ -> failwith "not supported by TemplateCoq"
       in
       aux acc env (DAst.get trm)
