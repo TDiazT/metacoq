@@ -528,6 +528,20 @@ struct
          let (b',acc) = quote_term acc env sigma b in
          (Q.mkProd (Q.quote_aname binder) t' b', acc)
 
+      | Glob_term.GLetIn (name, exp, ty, body) ->
+         (
+           match ty with
+           | Some ty' ->
+              let binder : Name.t Context.binder_annot = {binder_name = name ; binder_relevance = Sorts.Relevant } in
+	      let (exp',acc) = quote_term acc env sigma exp in
+              (* What to do if missing type annotation ? *)
+	      let (ty',acc) = quote_term acc env sigma ty' in
+              (* NOTE: Ignoring env extension *)
+	      let (body',acc) = quote_term acc env sigma body in
+      	      (Q.mkLetIn (Q.quote_aname binder) exp' ty' body', acc)
+           | None -> failwith "not supported by TemplateCoq"
+         )
+
       | Glob_term.GSort sorts ->
          let sort =
            (match sorts with
