@@ -7,17 +7,20 @@ From MetaCoq.Template Require Import All.
 (* Eval cbn in Def 2. *)
 (* Compute Def 4. *)
 
+
 Ltac poseX := fun x => pose x.
 Axiom (foo : nat).
 Goal True.
 Proof.
-  quote_term 1 (fun y => pose y).
   (* Var *)
   quote_untyped_term foo poseX.
 
   (* Ind *)
   quote_untyped_term nat poseX.
 
+  (* Constr *)
+  quote_untyped_term @nil poseX.
+  quote_untyped_term @cons poseX.
   (* App *)
   quote_untyped_term (foo nat) poseX.
   (* quote_untyped_term (foo nat 1 2) poseX. *)
@@ -44,5 +47,15 @@ Proof.
   quote_untyped_term (let x : nat := true in x) poseX.
   try quote_untyped_term (let x := true in foo) poseX.
 
-  quote_untyped_term nil poseX.
-  quote_untyped_term cons poseX.
+
+Abort.
+
+Section test.
+    Variables n foobar : nat.
+
+    Goal True.
+    (* quote_untyped_term nat poseX. *)
+    quote_untyped_term n poseX.
+    quote_untyped_term foobar poseX.
+    Definition test1 := $quote_untyped nat.
+    Definition test := $quote_untyped n.
