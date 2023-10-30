@@ -528,6 +528,24 @@ struct
          let (b',acc) = quote_term acc env sigma b in
          (Q.mkProd (Q.quote_aname binder) t' b', acc)
 
+      | Glob_term.GSort sorts ->
+         let sort =
+           (match sorts with
+            | UNamed [] -> failwith "not supported by TemplateCoq"
+            | UNamed ((sort, _) :: tl) ->
+               (
+                 match sort with
+                 | GSProp -> Sorts.sprop
+                 | GProp -> Sorts.prop
+                 | GSet -> Sorts.set
+                 (* FIXME *)
+                 (* | GUniv lvl -> Sorts.type1 *)
+                 | _ -> failwith "not supported by TemplateCoq"
+               )
+            | UAnonymous rigid -> Sorts.type1
+           ) in
+         (Q.mkSort (Q.quote_sort sort), acc)
+
       | _ -> failwith "not supported by TemplateCoq"
       in
       aux acc env (DAst.get trm)
