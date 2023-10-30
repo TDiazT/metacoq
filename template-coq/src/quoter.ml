@@ -491,7 +491,7 @@ struct
       | Glob_term.GRef (n, _) ->
          (
            match n with
-           | GlobRef.VarRef _ -> failwith "not supported by TemplateCoq"
+           | GlobRef.VarRef var -> (Q.mkVar (Q.quote_ident var), acc)
            | GlobRef.ConstRef c ->
               let kn = Constant.canonical c in
               (Q.mkConst (Q.quote_kn kn) (Q.quote_univ_instance Univ.Instance.empty), add_constant kn acc)
