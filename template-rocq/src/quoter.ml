@@ -566,6 +566,8 @@ struct
               let k' = Q.quote_cast_kind k in
               (Q.mkCast c' k' t', acc)
 
+      | Glob_term.GInt i -> (Q.mkInt (Q.quote_int63 i), acc)
+      | Glob_term.GFloat f -> (Q.mkFloat (Q.quote_float64 f), acc)
       | _ -> failwith "not supported by TemplateCoq"
       in
       aux acc env (DAst.get trm)
