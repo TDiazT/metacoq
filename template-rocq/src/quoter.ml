@@ -539,21 +539,38 @@ struct
               (* NOTE: Ignoring env extension *)
 	      let (body',acc) = quote_term acc env sigma body in
       	      (Q.mkLetIn (Q.quote_aname binder) exp' ty' body', acc)
-           | None -> failwith "not supported by TemplateCoq"
+           | None -> failwith "LetIn None not supported by TemplateCoq"
          )
+
+      | Glob_term.GRec (kind, fn_names, args, tys, bodies) ->
+         (match kind with
+          | Glob_term.GFix (rec_idxs, idx) ->
+             (* FIXME : What to do with undefined indices *)
+             let rec_idxs_norm = Array.map (Option.default 0) rec_idxs in
+             let fn_names = Array.map (fun name -> Context.make_annot (Name name) Sorts.Relevant) fn_names in
+
+             (* let args_array = Array.of_list (List.flatten (Array.to_list args)) in *)
+             (* let binders = Array.map (fun (name, _, _, _) -> Context.make_annot name Sorts.Relevant) args_array in *)
+             (* let binders = [||] in *)
+             let fp = ( ( rec_idxs_norm, idx ), (fn_names, tys, bodies)) in
+             quote_fixpoint acc env sigma fp
+
+          | Glob_term.GCoFix idx -> failwith "Cofix not supported by TemplateCoq"
+         )
+
 
       | Glob_term.GSort sorts ->
          let sort =
            (match sorts with
-            | UNamed [] -> failwith "not supported by TemplateCoq"
+            | UNamed [] -> failwith "UNamed not supported by TemplateCoq"
             | UNamed ((sort, _) :: tl) ->
                (
                  match sort with
                  | GSProp -> Sorts.sprop
                  | GProp -> Sorts.prop
                  | GSet -> Sorts.set
-                 (* FIXME *)
-                 (* | GUniv lvl -> Sorts.type1 *)
+                 | GUniv _ -> failwith "GUniv not supported by TemplateCoq"
+                 | GLocalUniv _ -> failwith "GLocalUniv not supported by TemplateCoq"
                  | _ -> failwith "not supported by TemplateCoq"
                )
             (* NOTE : Probably a better option ? *)
@@ -569,10 +586,35 @@ struct
 
       | Glob_term.GInt i -> (Q.mkInt (Q.quote_int63 i), acc)
       | Glob_term.GFloat f -> (Q.mkFloat (Q.quote_float64 f), acc)
-      | _ -> failwith "not supported by TemplateCoq"
+      | Glob_term.GEvar _ -> failwith "GEvar not supported by TemplateCoq"
+      | Glob_term.GPatVar _ -> failwith "GPatVar not supported by TemplateCoq"
+      | Glob_term.GCases _ -> failwith "GCases not supported by TemplateCoq"
+      | Glob_term.GLetTuple _ -> failwith "GLetTuple not supported by TemplateCoq"
+      | Glob_term.GIf _ -> failwith "GIf not supported by TemplateCoq"
+      | Glob_term.GHole _ -> failwith "GHole not supported by TemplateCoq"
+      | Glob_term.GProj _ -> failwith "GProj not supported by TemplateCoq"
+      | Glob_term.GArray _ -> failwith "GArray not supported by TemplateCoq"
       in
       aux acc env (DAst.get trm)
 
+    and quote_recdecl (acc : 'a) env sigma b (ns,ts,ds) =
+      (* let ctxt = *)
+      (*   CArray.map2_i (fun i na t -> (Context.Rel.Declaration.LocalAssum (na, Vars.lift i t))) ns ts in *)
+      (* let envfix = push_rel_context (CArray.rev_to_list ctxt) env in *)
+      let envfix = env in
+      let ns' = Array.map quote_binder ns in
+      let b' = Q.quote_int b in
+      let ts', acc = quote_terms quote_term acc env sigma ts in
+      let ds', acc = quote_terms quote_term acc envfix sigma ds in
+      ((b',(ns',ts',ds')), acc)
+    and quote_fixpoint acc env sigma ((a,b),decl) =
+      (* failwith "fix" *)
+      let a' = Array.map Q.quote_int a in
+      let (b',decl'),acc = quote_recdecl acc env sigma b decl in
+      (Q.mkFix ((a',b'),decl'), acc)
+    (* and quote_cofixpoint acc env sigma (a,decl) = *)
+    (*   let (a',decl'),acc = quote_recdecl acc env sigma a decl in *)
+    (*   (Q.mkCoFix (a',decl'), acc) *)
     in ((fun acc env -> quote_term acc (false, env)),
         (fun acc env t mib ->
         failwith "not supported"))

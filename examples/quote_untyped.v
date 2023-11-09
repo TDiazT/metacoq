@@ -8,6 +8,7 @@ From MetaCoq.Template Require Import All.
 (* Compute Def 4. *)
 
 
+
 Ltac poseX := fun x => pose x.
 Axiom (foo : nat).
 Goal True.
@@ -47,8 +48,18 @@ Proof.
   quote_untyped_term (let x : nat := true in x) poseX.
   try quote_untyped_term (let x := true in foo) poseX.
 
+  (* Fix *)
+
+  quote_untyped_term ((fix F ( x : bool ) : bool := F x)) poseX.
+  quote_untyped_term (fix F ( x : bool ) : bool := G x with G ( n : nat) : nat := F x for F) poseX.
+  quote_untyped_term (fix F ( x : bool ) : bool := G x with G ( n : nat) : nat := F x for G) poseX.
 
 Abort.
+
+Fixpoint to_rel (ctx : context) (t : term) : term :=
+  match t with
+  | tVar x => l
+
 
 Section test.
     Variables n foobar : nat.
