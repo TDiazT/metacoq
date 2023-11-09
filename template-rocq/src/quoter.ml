@@ -591,7 +591,8 @@ struct
       | Glob_term.GCases _ -> failwith "GCases not supported by TemplateCoq"
       | Glob_term.GLetTuple _ -> failwith "GLetTuple not supported by TemplateCoq"
       | Glob_term.GIf _ -> failwith "GIf not supported by TemplateCoq"
-      | Glob_term.GHole _ -> failwith "GHole not supported by TemplateCoq"
+      (* FIXME: Do a proper thing *)
+      | Glob_term.GHole _ -> (Q.mkEvar (Q.quote_int 9999) [||], acc)
       | Glob_term.GProj _ -> failwith "GProj not supported by TemplateCoq"
       | Glob_term.GArray _ -> failwith "GArray not supported by TemplateCoq"
       in
