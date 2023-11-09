@@ -51,6 +51,7 @@ Proof.
   (* Fix *)
 
   quote_untyped_term ((fix F ( x : bool ) : bool := F x)) poseX.
+  quote_untyped_term ((fix F ( x : bool ) := F x)) poseX.
   quote_untyped_term (fix F ( x : bool ) : bool := G x with G ( n : nat) : nat := F x for F) poseX.
   quote_untyped_term (fix F ( x : bool ) : bool := G x with G ( n : nat) : nat := F x for G) poseX.
 
