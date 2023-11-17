@@ -542,17 +542,26 @@ struct
            | None -> failwith "LetIn None not supported by TemplateCoq"
          )
 
-      | Glob_term.GRec (kind, fn_names, args, tys, bodies) ->
+      | Glob_term.GRec (kind, fn_names, binder_array, tys, bodies) ->
          (match kind with
           | Glob_term.GFix (rec_idxs, idx) ->
              (* FIXME : What to do with undefined indices *)
              let rec_idxs_norm = Array.map (Option.default 0) rec_idxs in
              let fn_names = Array.map (fun name -> Context.make_annot (Name name) Sorts.Relevant) fn_names in
-
-             (* let args_array = Array.of_list (List.flatten (Array.to_list args)) in *)
-             (* let binders = Array.map (fun (name, _, _, _) -> Context.make_annot name Sorts.Relevant) args_array in *)
-             (* let binders = [||] in *)
-             let fp = ( ( rec_idxs_norm, idx ), (fn_names, tys, bodies)) in
+             (* Wraps body in as many lambdas, prod or letIn as binders are passed *)
+             let wrapBody mkWrapper =
+               let mkAbsOrLetIn (id, binfo, letinfo, ty) body =
+                 let body' = DAst.make body in
+                 if Option.is_empty letinfo then
+                   mkWrapper (id, binfo, ty) body'
+                 else
+                   mkLetIn (id, ty, letinfo) body'
+               in
+               Array.mapi (fun i fn_binders -> DAst.make (List.fold_right mkAbsOrLetIn fn_binders (DAst.get bodies.(i)))) binder_array
+             in
+             let bodies' = wrapBody mkLambda in
+             let tys' = wrapBody mkProd in
+             let fp = ( ( rec_idxs_norm, idx ), (fn_names, tys', bodies')) in
              quote_fixpoint acc env sigma fp
 
           | Glob_term.GCoFix idx -> failwith "Cofix not supported by TemplateCoq"
@@ -598,6 +607,12 @@ struct
       in
       aux acc env (DAst.get trm)
 
+    and mkLambda (id, bkind, ty) body =
+      Glob_term.GLambda (id, bkind, ty, body)
+    and mkProd (id, bkind, ty) body =
+      Glob_term.GProd (id, bkind, ty, body)
+    and mkLetIn (id, ty, letinfo) body =
+      Glob_term.GLetIn (id, ty, letinfo, body)
     and quote_recdecl (acc : 'a) env sigma b (ns,ts,ds) =
       (* let ctxt = *)
       (*   CArray.map2_i (fun i na t -> (Context.Rel.Declaration.LocalAssum (na, Vars.lift i t))) ns ts in *)
@@ -609,10 +624,9 @@ struct
       let ds', acc = quote_terms quote_term acc envfix sigma ds in
       ((b',(ns',ts',ds')), acc)
     and quote_fixpoint acc env sigma ((a,b),decl) =
-      (* failwith "fix" *)
       let a' = Array.map Q.quote_int a in
-      let (b',decl'),acc = quote_recdecl acc env sigma b decl in
-      (Q.mkFix ((a',b'),decl'), acc)
+      let (b', decl'), acc = quote_recdecl acc env sigma b decl in
+      (Q.mkFix ((a', b'), decl'), acc)
     (* and quote_cofixpoint acc env sigma (a,decl) = *)
     (*   let (a',decl'),acc = quote_recdecl acc env sigma a decl in *)
     (*   (Q.mkCoFix (a',decl'), acc) *)
