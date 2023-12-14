@@ -483,130 +483,216 @@ struct
     fst (fn () env sigma trm)
 
   let quote_untyped_term_remember
-      (add_constant : KerName.t -> 'a -> 'a)
-      (add_inductive : Names.inductive -> Declarations.mutual_inductive_body -> 'a -> 'a) =
+        (add_constant : KerName.t -> 'a -> 'a)
+        (add_inductive : Names.inductive -> Declarations.mutual_inductive_body -> 'a -> 'a) =
     let rec quote_term (acc : 'a) env sigma trm =
       let aux acc env trm =
-      match trm with
-      | Glob_term.GRef (n, _) ->
-         (
-           match n with
-           | GlobRef.VarRef var -> (Q.mkVar (Q.quote_ident var), acc)
-           | GlobRef.ConstRef c ->
-              let kn = Constant.canonical c in
-              (Q.mkConst (Q.quote_kn kn) (Q.quote_univ_instance Univ.Instance.empty), add_constant kn acc)
-           | GlobRef.IndRef mind ->
-              (Q.mkInd (quote_inductive' mind) (Q.quote_univ_instance Univ.Instance.empty),
-               let mib = Environ.lookup_mind (fst mind) (snd env) in
-               add_inductive mind mib acc)
-           | GlobRef.ConstructRef (mind, c) ->
-              let mib = Environ.lookup_mind (fst mind) (snd env) in
-              (Q.mkConstruct (quote_inductive' mind, Q.quote_int (c - 1)) (Q.quote_univ_instance Univ.Instance.empty),
-               add_inductive mind mib acc)
-         )
+        match trm with
+        | Glob_term.GRef (n, _) ->
+           (
+             match n with
+             | GlobRef.VarRef var -> (Q.mkVar (Q.quote_ident var), acc)
+             | GlobRef.ConstRef c ->
+                let kn = Constant.canonical c in
+                (Q.mkConst (Q.quote_kn kn) dummy_univ, add_constant kn acc)
+             | GlobRef.IndRef mind ->
+                (Q.mkInd (quote_inductive' mind) dummy_univ,
+                 let mib = Environ.lookup_mind (fst mind) (snd env) in
+                 add_inductive mind mib acc)
+             | GlobRef.ConstructRef (mind, c) ->
+                let mib = Environ.lookup_mind (fst mind) (snd env) in
+                (Q.mkConstruct (quote_inductive' mind, Q.quote_int (c - 1)) dummy_univ,
+                 add_inductive mind mib acc)
+           )
 
-      | Glob_term.GVar v -> (Q.mkVar (Q.quote_ident v), acc)
+        | Glob_term.GVar v -> (Q.mkVar (Q.quote_ident v), acc)
 
-      | Glob_term.GApp (f,xs) ->
-        let (f',acc) = quote_term acc env sigma f in
-        let (xs',acc) = quote_terms quote_term acc env sigma (CArray.rev_of_list xs) in
-        (Q.mkApp f' xs', acc)
+        | Glob_term.GApp (f,xs) ->
+           let (f',acc) = quote_term acc env sigma f in
+           let (xs',acc) = quote_terms quote_term acc env sigma (CArray.rev_of_list xs) in
+           (Q.mkApp f' xs', acc)
 
-      (* NOTE: Relevance set to Relevant always *)
-      | Glob_term.GLambda (n, _, t, b) ->
-         let binder = Context.make_annot n Sorts.Relevant in
-         let (t',acc) = quote_term acc env sigma t in
-         (* let (b',acc) = quote_term acc (push_rel (toDecl (n, None, t)) env) sigma b in *)
-         let (b',acc) = quote_term acc env sigma b in
-        (Q.mkLambda (Q.quote_aname binder) t' b', acc)
+        (* NOTE: Relevance set to Relevant always *)
+        | Glob_term.GLambda (n, _, t, b) ->
+           let binder = Context.make_annot n Sorts.Relevant in
+           let (t',acc) = quote_term acc env sigma t in
+           (* let (b',acc) = quote_term acc (push_rel (toDecl (n, None, t)) env) sigma b in *)
+           let (b',acc) = quote_term acc env sigma b in
+           (Q.mkLambda (Q.quote_aname binder) t' b', acc)
 
-      (* NOTE: Relevance set to Relevant always *)
-      | Glob_term.GProd (n, _, t, b) ->
-         let binder = Context.make_annot n Sorts.Relevant in
-         let (t',acc) = quote_term acc env sigma t in
-         (* let env = push_rel (toDecl (n, None, t)) env in *)
-         let (b',acc) = quote_term acc env sigma b in
-         (Q.mkProd (Q.quote_aname binder) t' b', acc)
+        (* NOTE: Relevance set to Relevant always *)
+        | Glob_term.GProd (n, _, t, b) ->
+           let binder = Context.make_annot n Sorts.Relevant in
+           let (t',acc) = quote_term acc env sigma t in
+           (* let env = push_rel (toDecl (n, None, t)) env in *)
+           let (b',acc) = quote_term acc env sigma b in
+           (Q.mkProd (Q.quote_aname binder) t' b', acc)
 
-      | Glob_term.GLetIn (name, exp, ty, body) ->
-         (
-           match ty with
-           | Some ty' ->
-              let binder = Context.make_annot name Sorts.Relevant in
-	      let (exp',acc) = quote_term acc env sigma exp in
-              (* What to do if missing type annotation ? *)
-	      let (ty',acc) = quote_term acc env sigma ty' in
-              (* NOTE: Ignoring env extension *)
-	      let (body',acc) = quote_term acc env sigma body in
-      	      (Q.mkLetIn (Q.quote_aname binder) exp' ty' body', acc)
-           | None -> failwith "LetIn None not supported by TemplateCoq"
-         )
+        | Glob_term.GLetIn (name, exp, ty, body) ->
+           (
+             match ty with
+             | Some ty' ->
+                let binder = Context.make_annot name Sorts.Relevant in
+	        let (exp',acc) = quote_term acc env sigma exp in
+                (* What to do if missing type annotation ? *)
+	        let (ty',acc) = quote_term acc env sigma ty' in
+                (* NOTE: Ignoring env extension *)
+	        let (body',acc) = quote_term acc env sigma body in
+      	        (Q.mkLetIn (Q.quote_aname binder) exp' ty' body', acc)
+             | None -> failwith "LetIn None not supported by TemplateCoq"
+           )
 
-      | Glob_term.GRec (kind, fn_names, binder_array, tys, bodies) ->
-         (match kind with
-          | Glob_term.GFix (rec_idxs, idx) ->
-             (* FIXME : What to do with undefined indices *)
-             let rec_idxs_norm = Array.map (Option.default 0) rec_idxs in
-             let fn_names = Array.map (fun name -> Context.make_annot (Name name) Sorts.Relevant) fn_names in
-             (* Wraps body in as many lambdas, prod or letIn as binders are passed *)
-             let wrapBody mkWrapper =
-               let mkAbsOrLetIn (id, binfo, letinfo, ty) body =
-                 let body' = DAst.make body in
-                 if Option.is_empty letinfo then
-                   mkWrapper (id, binfo, ty) body'
-                 else
-                   mkLetIn (id, ty, letinfo) body'
-               in
-               Array.mapi (fun i fn_binders -> DAst.make (List.fold_right mkAbsOrLetIn fn_binders (DAst.get bodies.(i)))) binder_array
-             in
-             let bodies' = wrapBody mkLambda in
-             let tys' = wrapBody mkProd in
-             let fp = ( ( rec_idxs_norm, idx ), (fn_names, tys', bodies')) in
-             quote_fixpoint acc env sigma fp
-
-          | Glob_term.GCoFix idx -> failwith "Cofix not supported by TemplateCoq"
-         )
-
-
-      | Glob_term.GSort sorts ->
-         let sort =
-           (match sorts with
-            | UNamed [] -> failwith "UNamed not supported by TemplateCoq"
-            | UNamed ((sort, _) :: tl) ->
+        | Glob_term.GCases (case_style, type_info, discrs, branches) ->
+           let qpred, acc = if Option.is_empty type_info then dummy_evar, acc else quote_term acc env sigma (Option.get type_info) in
+           (match case_style with
+            | Constr.RegularStyle ->
                (
-                 match sort with
-                 | GSProp -> Sorts.sprop
-                 | GProp -> Sorts.prop
-                 | GSet -> Sorts.set
-                 | GUniv _ -> failwith "GUniv not supported by TemplateCoq"
-                 | GLocalUniv _ -> failwith "GLocalUniv not supported by TemplateCoq"
-                 | _ -> failwith "not supported by TemplateCoq"
+                 match discrs with
+                 | [] -> failwith "Empty discriminee list not supported by TemplateCoq"
+                 | first_discr :: rest_discrs ->
+                    (* Function to extract constructor pattern names *)
+                    let rec ctor_pat_names pats =
+                      match pats with
+                      | [] -> []
+                      | hd :: tl ->
+                         (match DAst.get hd with
+                          | Glob_term.PatVar n -> n :: ctor_pat_names tl
+                          | Glob_term.PatCstr (_, ctor_pats, _) -> ctor_pat_names ctor_pats
+                         )
+                    in
+
+                    (* Function to process a discriminator and get its parameters *)
+                    let process_discriminator (discr, (as_info, pred_patt)) env sigma =
+                      let as_binder = mkAnnot as_info in
+                      let (ind, npar, qu, q_pars) =
+                        if Option.is_empty pred_patt then
+                          (dummy_ind, Q.quote_int 9999, dummy_univ, [||])
+                        else
+                          let ((mind, idx), _) = (Option.get pred_patt).CAst.v in
+                          let mib = Environ.lookup_mind mind (snd env) in
+                          let ind = Q.quote_inductive (Q.quote_kn (Names.MutInd.canonical mind),
+                                                       Q.quote_int idx) in
+                          let npar = Q.quote_int mib.mind_nparams in
+                          let qu = Q.quote_univ_instance mib.mind_univ_hyps in
+                          let q_pars = Array.make mib.mind_nparams dummy_evar in
+                          (ind, npar, qu, q_pars)
+                      in
+                      let (qdiscr, acc) = quote_term acc env sigma discr in
+                      (as_binder, ind, npar, qu, q_pars, qdiscr, acc)
+                    in
+
+                    (* Process the first discriminator *)
+                    let first_as_binder, first_ind, first_npar, first_qu, first_q_pars, first_qdiscr, acc = process_discriminator first_discr env sigma in
+                    let qpctx = [|Q.quote_aname first_as_binder|] in
+
+                    (* Function to wrap branches with matches for each discriminator *)
+                    let rec wrap_branches_with_discrs discrs acc env sigma branches =
+                      match discrs with
+                      | [] -> branches, acc
+                      | discr :: tl ->
+                         let as_binder, ind, npar, qu, q_pars, qdiscr, acc = process_discriminator discr env sigma in
+                         let new_branches, acc =
+                           List.fold_right (fun (qpat_binders, qbody) (brs, acc) ->
+                               let nested_match = Q.mkCase (ind, npar, Q.quote_relevance Sorts.Relevant) (qu, q_pars, [|Q.quote_aname as_binder|], qpred) qdiscr [(qpat_binders, qbody)] in
+                               ((qpat_binders, nested_match) :: brs, acc)
+                             ) branches ([], acc)
+                         in
+                         wrap_branches_with_discrs tl acc env sigma new_branches
+                    in
+
+                    (* Process branches *)
+                    let (brs, acc) =
+                      List.fold_left (fun (brs, acc) branch ->
+                          let (_, pats, body) = branch.CAst.v in
+                          let pat_names = List.fold_right (fun pat acc ->
+                                              (match DAst.get pat with
+                                               | Glob_term.PatVar _ -> acc
+                                               | Glob_term.PatCstr (_, ctor_pats, _) -> ctor_pat_names ctor_pats
+                                              )
+                                            ) pats [] in
+                          let pat_binders = Array.of_list (List.map mkAnnot pat_names) in
+                          let qpat_binders = quote_name_annots pat_binders in
+                          let qbody, acc = quote_term acc env sigma body in
+                          ((qpat_binders, qbody) :: brs, acc)
+                        ) ([], acc) branches
+                    in
+
+                    (* Wrap branches with additional matches and construct the final case *)
+                    let final_branches, acc = wrap_branches_with_discrs rest_discrs acc env sigma brs in
+                    (Q.mkCase (first_ind, first_npar, Q.quote_relevance Sorts.Relevant) (first_qu, first_q_pars, qpctx, qpred) first_qdiscr (List.rev final_branches), acc)
                )
-            (* NOTE : Probably a better option ? *)
-            | UAnonymous rigid -> Sorts.type1
-           ) in
-         (Q.mkSort (Q.quote_sort sort), acc)
+            | _ -> failwith "Other match styles are not supported by TemplateCoq"
+           )
 
-      | Glob_term.GCast (c,k,t) ->
-         let (c',acc) = quote_term acc env sigma c in
-         let (t',acc) = quote_term acc env sigma t in
-         let k' = Q.quote_cast_kind k in
-         (Q.mkCast c' k' t', acc)
+        | Glob_term.GRec (kind, fn_names, binder_array, tys, bodies) ->
+           (match kind with
+            | Glob_term.GFix (rec_idxs, idx) ->
+               (* FIXME : What to do with undefined indices *)
+               let rec_idxs_norm = Array.map (Option.default 0) rec_idxs in
+               let fn_names = Array.map (fun name -> Context.make_annot (Name name) Sorts.Relevant) fn_names in
+               (* Wraps body in as many lambdas, prod or letIn as binders are passed *)
+               let wrapBody mkWrapper =
+                 let mkAbsOrLetIn (id, binfo, letinfo, ty) body =
+                   let body' = DAst.make body in
+                   if Option.is_empty letinfo then
+                     mkWrapper (id, binfo, ty) body'
+                   else
+                     mkLetIn (id, ty, letinfo) body'
+                 in
+                 Array.mapi (fun i fn_binders -> DAst.make (List.fold_right mkAbsOrLetIn fn_binders (DAst.get bodies.(i)))) binder_array
+               in
+               let bodies' = wrapBody mkLambda in
+               let tys' = wrapBody mkProd in
+               let fp = ( ( rec_idxs_norm, idx ), (fn_names, tys', bodies')) in
+               quote_fixpoint acc env sigma fp
 
-      | Glob_term.GInt i -> (Q.mkInt (Q.quote_int63 i), acc)
-      | Glob_term.GFloat f -> (Q.mkFloat (Q.quote_float64 f), acc)
-      | Glob_term.GEvar _ -> failwith "GEvar not supported by TemplateCoq"
-      | Glob_term.GPatVar _ -> failwith "GPatVar not supported by TemplateCoq"
-      | Glob_term.GCases _ -> failwith "GCases not supported by TemplateCoq"
-      | Glob_term.GLetTuple _ -> failwith "GLetTuple not supported by TemplateCoq"
-      | Glob_term.GIf _ -> failwith "GIf not supported by TemplateCoq"
-      (* FIXME: Do a proper thing *)
-      | Glob_term.GHole _ -> (Q.mkEvar (Q.quote_int 9999) [||], acc)
-      | Glob_term.GProj _ -> failwith "GProj not supported by TemplateCoq"
-      | Glob_term.GArray _ -> failwith "GArray not supported by TemplateCoq"
+            | Glob_term.GCoFix idx -> failwith "Cofix not supported by TemplateCoq"
+           )
+
+        | Glob_term.GSort sorts ->
+           let sort =
+             (match sorts with
+              | UNamed [] -> failwith "UNamed not supported by TemplateCoq"
+              | UNamed ((sort, _) :: tl) ->
+                 (
+                   match sort with
+                   | GSProp -> Sorts.sprop
+                   | GProp -> Sorts.prop
+                   | GSet -> Sorts.set
+                   | GUniv _ -> failwith "GUniv not supported by TemplateCoq"
+                   | GLocalUniv _ -> failwith "GLocalUniv not supported by TemplateCoq"
+                   | _ -> failwith "not supported by TemplateCoq"
+                 )
+              (* NOTE : Probably a better option ? *)
+              | UAnonymous rigid -> Sorts.type1
+             ) in
+           (Q.mkSort (Q.quote_sort sort), acc)
+
+        | Glob_term.GCast (c,k,t) ->
+           let (c',acc) = quote_term acc env sigma c in
+           let (t',acc) = quote_term acc env sigma t in
+           let k' = Q.quote_cast_kind k in
+           (Q.mkCast c' k' t', acc)
+
+        | Glob_term.GInt i -> (Q.mkInt (Q.quote_int63 i), acc)
+        | Glob_term.GFloat f -> (Q.mkFloat (Q.quote_float64 f), acc)
+        | Glob_term.GEvar _ -> failwith "GEvar not supported by TemplateCoq"
+        | Glob_term.GPatVar _ -> failwith "GPatVar not supported by TemplateCoq"
+        | Glob_term.GLetTuple _ -> failwith "GLetTuple not supported by TemplateCoq"
+        | Glob_term.GIf _ -> failwith "GIf not supported by TemplateCoq"
+        (* FIXME: Do a proper thing *)
+        | Glob_term.GHole _ -> dummy_evar, acc
+        | Glob_term.GProj _ -> failwith "GProj not supported by TemplateCoq"
+        | Glob_term.GArray _ -> failwith "GArray not supported by TemplateCoq"
       in
       aux acc env (DAst.get trm)
-
+    and dummy_univ = Q.quote_univ_instance Univ.Instance.empty
+    and dummy_evar = Q.mkEvar (Q.quote_int 9999) [||]
+    and dummy_ind =
+      let open Names in
+      let dummy_kername = KerName.make (ModPath.MPfile DirPath.empty) (Label.make "dummy") in
+      Q.quote_inductive (Q.quote_kn dummy_kername, (Q.quote_int 9999))
+    and mkAnnot n = Context.make_annot n Sorts.Relevant
     and mkLambda (id, bkind, ty) body =
       Glob_term.GLambda (id, bkind, ty, body)
     and mkProd (id, bkind, ty) body =
@@ -627,12 +713,12 @@ struct
       let a' = Array.map Q.quote_int a in
       let (b', decl'), acc = quote_recdecl acc env sigma b decl in
       (Q.mkFix ((a', b'), decl'), acc)
-    (* and quote_cofixpoint acc env sigma (a,decl) = *)
-    (*   let (a',decl'),acc = quote_recdecl acc env sigma a decl in *)
-    (*   (Q.mkCoFix (a',decl'), acc) *)
+        (* and quote_cofixpoint acc env sigma (a,decl) = *)
+        (*   let (a',decl'),acc = quote_recdecl acc env sigma a decl in *)
+        (*   (Q.mkCoFix (a',decl'), acc) *)
     in ((fun acc env -> quote_term acc (false, env)),
         (fun acc env t mib ->
-        failwith "not supported"))
+          failwith "not supported"))
 
   let quote_untyped_term env sigma trm =
     let (fn,_) = quote_untyped_term_remember (fun _ () -> ()) (fun _ _ () -> ()) in
