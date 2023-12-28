@@ -482,9 +482,26 @@ struct
     let (fn,_) = quote_term_remember (fun _ () -> ()) (fun _ _ () -> ()) in
     fst (fn () env sigma trm)
 
+  let dummy_qint = Q.quote_int 9999
+  let dummy_quniv = Q.quote_univ_instance Univ.Instance.empty
+  let dummy_qevar = Q.mkEvar dummy_qint [||]
+  let dummy_qind =
+    let open Names in
+    let dummy_kername = KerName.make (ModPath.MPfile DirPath.empty) (Label.make "dummy") in
+    Q.quote_inductive (Q.quote_kn dummy_kername, dummy_qint)
+
   let quote_untyped_term_remember
         (add_constant : KerName.t -> 'a -> 'a)
         (add_inductive : Names.inductive -> Declarations.mutual_inductive_body -> 'a -> 'a) =
+    let mkLambda (id, bkind, ty) body =
+      Glob_term.GLambda (id, bkind, ty, body)
+    in
+    let mkProd (id, bkind, ty) body =
+      Glob_term.GProd (id, bkind, ty, body)
+    in
+    let mkLetIn (id, ty, letinfo) body =
+      Glob_term.GLetIn (id, ty, letinfo, body)
+    in
     let rec quote_term (acc : 'a) env sigma trm =
       let aux acc env trm =
         match trm with
@@ -494,14 +511,14 @@ struct
              | GlobRef.VarRef var -> (Q.mkVar (Q.quote_ident var), acc)
              | GlobRef.ConstRef c ->
                 let kn = Constant.canonical c in
-                (Q.mkConst (Q.quote_kn kn) dummy_univ, add_constant kn acc)
+                (Q.mkConst (Q.quote_kn kn) dummy_quniv, add_constant kn acc)
              | GlobRef.IndRef mind ->
-                (Q.mkInd (quote_inductive' mind) dummy_univ,
+                (Q.mkInd (quote_inductive' mind) dummy_quniv,
                  let mib = Environ.lookup_mind (fst mind) (snd env) in
                  add_inductive mind mib acc)
              | GlobRef.ConstructRef (mind, c) ->
                 let mib = Environ.lookup_mind (fst mind) (snd env) in
-                (Q.mkConstruct (quote_inductive' mind, Q.quote_int (c - 1)) dummy_univ,
+                (Q.mkConstruct (quote_inductive' mind, Q.quote_int (c - 1)) dummy_quniv,
                  add_inductive mind mib acc)
            )
 
@@ -514,7 +531,7 @@ struct
 
         (* NOTE: Relevance set to Relevant always *)
         | Glob_term.GLambda (n, _, t, b) ->
-           let binder = Context.make_annot n Sorts.Relevant in
+           let binder = Context.annotR n in
            let (t',acc) = quote_term acc env sigma t in
            (* let (b',acc) = quote_term acc (push_rel (toDecl (n, None, t)) env) sigma b in *)
            let (b',acc) = quote_term acc env sigma b in
@@ -522,7 +539,7 @@ struct
 
         (* NOTE: Relevance set to Relevant always *)
         | Glob_term.GProd (n, _, t, b) ->
-           let binder = Context.make_annot n Sorts.Relevant in
+           let binder = Context.annotR n in
            let (t',acc) = quote_term acc env sigma t in
            (* let env = push_rel (toDecl (n, None, t)) env in *)
            let (b',acc) = quote_term acc env sigma b in
@@ -532,7 +549,7 @@ struct
            (
              match ty with
              | Some ty' ->
-                let binder = Context.make_annot name Sorts.Relevant in
+                let binder = Context.annotR name in
 	        let (exp',acc) = quote_term acc env sigma exp in
                 (* What to do if missing type annotation ? *)
 	        let (ty',acc) = quote_term acc env sigma ty' in
@@ -543,7 +560,7 @@ struct
            )
 
         | Glob_term.GCases (case_style, type_info, discrs, branches) ->
-           let qpred, acc = if Option.is_empty type_info then dummy_evar, acc else quote_term acc env sigma (Option.get type_info) in
+           let qpred, acc = if Option.is_empty type_info then dummy_qevar, acc else quote_term acc env sigma (Option.get type_info) in
            (match case_style with
             | Constr.RegularStyle ->
                (
@@ -563,10 +580,10 @@ struct
 
                     (* Function to process a discriminator and get its parameters *)
                     let process_discriminator (discr, (as_info, pred_patt)) env sigma =
-                      let as_binder = mkAnnot as_info in
+                      let as_binder = Context.annotR as_info in
                       let (ind, npar, qu, q_pars) =
                         if Option.is_empty pred_patt then
-                          (dummy_ind, Q.quote_int 9999, dummy_univ, [||])
+                          (dummy_qind, dummy_qint, dummy_quniv, [||])
                         else
                           let ((mind, idx), _) = (Option.get pred_patt).CAst.v in
                           let mib = Environ.lookup_mind mind (snd env) in
@@ -574,7 +591,7 @@ struct
                                                        Q.quote_int idx) in
                           let npar = Q.quote_int mib.mind_nparams in
                           let qu = Q.quote_univ_instance mib.mind_univ_hyps in
-                          let q_pars = Array.make mib.mind_nparams dummy_evar in
+                          let q_pars = Array.make mib.mind_nparams dummy_qevar in
                           (ind, npar, qu, q_pars)
                       in
                       let (qdiscr, acc) = quote_term acc env sigma discr in
@@ -610,7 +627,7 @@ struct
                                                | Glob_term.PatCstr (_, ctor_pats, _) -> ctor_pat_names ctor_pats
                                               )
                                             ) pats [] in
-                          let pat_binders = Array.of_list (List.map mkAnnot pat_names) in
+                          let pat_binders = Array.of_list (List.map Context.annotR pat_names) in
                           let qpat_binders = quote_name_annots pat_binders in
                           let qbody, acc = quote_term acc env sigma body in
                           ((qpat_binders, qbody) :: brs, acc)
@@ -629,7 +646,7 @@ struct
             | Glob_term.GFix (rec_idxs, idx) ->
                (* FIXME : What to do with undefined indices *)
                let rec_idxs_norm = Array.map (Option.default 0) rec_idxs in
-               let fn_names = Array.map (fun name -> Context.make_annot (Name name) Sorts.Relevant) fn_names in
+               let fn_names = Array.map (fun fname -> Context.annotR (Name fname)) fn_names in
                (* Wraps body in as many lambdas, prod or letIn as binders are passed *)
                let wrapBody mkWrapper =
                  let mkAbsOrLetIn (id, binfo, letinfo, ty) body =
@@ -663,7 +680,7 @@ struct
                    | GLocalUniv _ -> failwith "GLocalUniv not supported by TemplateCoq"
                    | _ -> failwith "not supported by TemplateCoq"
                  )
-              (* NOTE : Probably a better option ? *)
+              (* NOTE : There is probably a better option ? *)
               | UAnonymous rigid -> Sorts.type1
              ) in
            (Q.mkSort (Q.quote_sort sort), acc)
@@ -681,24 +698,11 @@ struct
         | Glob_term.GLetTuple _ -> failwith "GLetTuple not supported by TemplateCoq"
         | Glob_term.GIf _ -> failwith "GIf not supported by TemplateCoq"
         (* FIXME: Do a proper thing *)
-        | Glob_term.GHole _ -> dummy_evar, acc
+        | Glob_term.GHole _ -> dummy_qevar, acc
         | Glob_term.GProj _ -> failwith "GProj not supported by TemplateCoq"
         | Glob_term.GArray _ -> failwith "GArray not supported by TemplateCoq"
       in
       aux acc env (DAst.get trm)
-    and dummy_univ = Q.quote_univ_instance Univ.Instance.empty
-    and dummy_evar = Q.mkEvar (Q.quote_int 9999) [||]
-    and dummy_ind =
-      let open Names in
-      let dummy_kername = KerName.make (ModPath.MPfile DirPath.empty) (Label.make "dummy") in
-      Q.quote_inductive (Q.quote_kn dummy_kername, (Q.quote_int 9999))
-    and mkAnnot n = Context.make_annot n Sorts.Relevant
-    and mkLambda (id, bkind, ty) body =
-      Glob_term.GLambda (id, bkind, ty, body)
-    and mkProd (id, bkind, ty) body =
-      Glob_term.GProd (id, bkind, ty, body)
-    and mkLetIn (id, ty, letinfo) body =
-      Glob_term.GLetIn (id, ty, letinfo, body)
     and quote_recdecl (acc : 'a) env sigma b (ns,ts,ds) =
       (* let ctxt = *)
       (*   CArray.map2_i (fun i na t -> (Context.Rel.Declaration.LocalAssum (na, Vars.lift i t))) ns ts in *)
