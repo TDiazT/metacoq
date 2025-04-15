@@ -115,9 +115,9 @@ struct
     | _ -> Universes0.IntoAny
 
   let quote_cast_kind = function
-    | Constr.DEFAULTcast -> Cast
     | Constr.NATIVEcast -> NativeCast
     | Constr.VMcast -> VmCast
+    | _ -> Cast
 
   let quote_dirpath (dp : DirPath.t) : Kernames.dirpath =
     let l = DirPath.repr dp in

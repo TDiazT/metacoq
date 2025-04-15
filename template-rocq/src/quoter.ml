@@ -501,7 +501,7 @@ struct
           univsty oib.mind_user_lc)
         univs mib.mind_packets
 
-  let quote_term_rec ~bypass ?(with_universes=true) env sigma trm =
+  let quote_term_rec ~bypass ?(with_universes=true) ?(with_restriction=true) env sigma trm =
     let visited_terms = ref Names.KNset.empty in
     let visited_types = ref Mindset.empty in
     let universes = ref Univ.Level.Set.empty in
@@ -595,9 +595,11 @@ struct
     let decls = List.fold_right (fun (kn, d) acc -> Q.add_global_decl kn d acc) !constants (Q.empty_global_declarations ()) in
     let univs =
       if with_universes then
-        let univs = Univ.Level.Set.union (Vars.universes_of_constr trm) !universes in
-        let univs = Univ.Level.Set.filter (fun l -> Option.is_empty (Univ.Level.var_index l)) univs in
-        quote_ugraph ~kept:univs (Environ.universes env)
+        if with_restriction then
+          let univs = Univ.Level.Set.union (Vars.universes_of_constr trm) !universes in
+          let univs = Univ.Level.Set.filter (fun l -> Option.is_empty (Univ.Level.var_index l)) univs in
+          quote_ugraph ~kept:univs (Environ.universes env)
+        else quote_ugraph (Environ.universes env)
       else
         (debug Pp.(fun () -> str"Skipping universes: ");
          time (Pp.str"Quoting empty universe context")
