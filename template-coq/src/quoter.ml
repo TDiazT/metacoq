@@ -483,7 +483,7 @@ struct
     fst (fn () env sigma trm)
 
   let dummy_qint = Q.quote_int 9999
-  let dummy_quniv = Q.quote_univ_instance Univ.Instance.empty
+  let dummy_quniv = Q.quote_univ_instance UVars.Instance.empty
   let dummy_qevar = Q.mkEvar dummy_qint [||]
   let dummy_qind =
     let open Names in
@@ -493,14 +493,14 @@ struct
   let quote_untyped_term_remember
         (add_constant : KerName.t -> 'a -> 'a)
         (add_inductive : Names.inductive -> Declarations.mutual_inductive_body -> 'a -> 'a) =
-    let mkLambda (id, bkind, ty) body =
-      Glob_term.GLambda (id, bkind, ty, body)
+    let mkLambda (id, rel, bkind, ty) body =
+      Glob_term.GLambda (id, rel, bkind, ty, body)
     in
-    let mkProd (id, bkind, ty) body =
-      Glob_term.GProd (id, bkind, ty, body)
+    let mkProd (id, rel, bkind, ty) body =
+      Glob_term.GProd (id, rel, bkind, ty, body)
     in
-    let mkLetIn (id, ty, letinfo) body =
-      Glob_term.GLetIn (id, ty, letinfo, body)
+    let mkLetIn (id, rel, ty, letinfo) body =
+      Glob_term.GLetIn (id, rel, ty, letinfo, body)
     in
     let rec quote_term (acc : 'a) env sigma trm =
       let aux acc env trm =
@@ -530,22 +530,22 @@ struct
            (Q.mkApp f' xs', acc)
 
         (* NOTE: Relevance set to Relevant always *)
-        | Glob_term.GLambda (n, _, t, b) ->
+        | Glob_term.GLambda (n, rel, bkind, t, b) ->
            let binder = Context.annotR n in
            let (t',acc) = quote_term acc env sigma t in
            (* let (b',acc) = quote_term acc (push_rel (toDecl (n, None, t)) env) sigma b in *)
            let (b',acc) = quote_term acc env sigma b in
            (Q.mkLambda (Q.quote_aname binder) t' b', acc)
 
-        (* NOTE: Relevance set to Relevant always *)
-        | Glob_term.GProd (n, _, t, b) ->
+           (* NOTE: Relevance set to Relevant always *)
+           | Glob_term.GProd (n, _, _, t, b) ->
            let binder = Context.annotR n in
            let (t',acc) = quote_term acc env sigma t in
            (* let env = push_rel (toDecl (n, None, t)) env in *)
            let (b',acc) = quote_term acc env sigma b in
            (Q.mkProd (Q.quote_aname binder) t' b', acc)
 
-        | Glob_term.GLetIn (name, exp, ty, body) ->
+        | Glob_term.GLetIn (name, rel, exp, ty, body) ->
            (
              match ty with
              | Some ty' ->
@@ -648,28 +648,30 @@ struct
                let rec_idxs_norm = Array.map (Option.default 0) rec_idxs in
                let fn_names = Array.map (fun fname -> Context.annotR (Name fname)) fn_names in
                (* Wraps body in as many lambdas, prod or letIn as binders are passed *)
-               let wrapBody mkWrapper =
-                 let mkAbsOrLetIn (id, binfo, letinfo, ty) body =
+               let wrap_body mk_wrapper =
+                 let mkAbsOrLetIn (id, rel, binfo, letinfo, ty) body =
                    let body' = DAst.make body in
                    if Option.is_empty letinfo then
-                     mkWrapper (id, binfo, ty) body'
+                     mk_wrapper (id, rel, binfo, ty) body'
                    else
-                     mkLetIn (id, ty, letinfo) body'
+                     mkLetIn (id, rel, ty, letinfo) body'
                  in
                  Array.mapi (fun i fn_binders -> DAst.make (List.fold_right mkAbsOrLetIn fn_binders (DAst.get bodies.(i)))) binder_array
                in
-               let bodies' = wrapBody mkLambda in
-               let tys' = wrapBody mkProd in
+               let bodies' = wrap_body mkLambda in
+               let tys' = wrap_body mkProd in
                let fp = ( ( rec_idxs_norm, idx ), (fn_names, tys', bodies')) in
                quote_fixpoint acc env sigma fp
 
             | Glob_term.GCoFix idx -> failwith "Cofix not supported by TemplateCoq"
            )
 
-        | Glob_term.GSort sorts ->
+        | Glob_term.GSort (qvar, sorts) ->
+          (* We are taking the sort to be the first one in the list of sorts. Can't remember why. *)
            let sort =
              (match sorts with
               | UNamed [] -> failwith "UNamed not supported by TemplateCoq"
+              (* ignoring the level *)
               | UNamed ((sort, _) :: tl) ->
                  (
                    match sort with
@@ -678,7 +680,7 @@ struct
                    | GSet -> Sorts.set
                    | GUniv _ -> failwith "GUniv not supported by TemplateCoq"
                    | GLocalUniv _ -> failwith "GLocalUniv not supported by TemplateCoq"
-                   | _ -> failwith "not supported by TemplateCoq"
+                   | GRawUniv _ -> failwith "GRawUniv not supported by TemplateCoq"
                  )
               (* NOTE : There is probably a better option ? *)
               | UAnonymous rigid -> Sorts.type1
@@ -686,6 +688,8 @@ struct
            (Q.mkSort (Q.quote_sort sort), acc)
 
         | Glob_term.GCast (c,k,t) ->
+          (* Can't remember what the kind is for *)
+          let k = match k with | Some k -> k | None -> failwith "GCast with None kind not supported by TemplateCoq" in
            let (c',acc) = quote_term acc env sigma c in
            let (t',acc) = quote_term acc env sigma t in
            let k' = Q.quote_cast_kind k in
@@ -701,6 +705,8 @@ struct
         | Glob_term.GHole _ -> dummy_qevar, acc
         | Glob_term.GProj _ -> failwith "GProj not supported by TemplateCoq"
         | Glob_term.GArray _ -> failwith "GArray not supported by TemplateCoq"
+        | Glob_term.GGenarg _ -> failwith "GGenarg not supported by TemplateCoq"
+        | Glob_term.GString _ -> failwith "GString not supported by TemplateCoq"
       in
       aux acc env (DAst.get trm)
     and quote_recdecl (acc : 'a) env sigma b (ns,ts,ds) =
