@@ -159,6 +159,18 @@ TACTIC EXTEND TemplateCoq_quote_term
   end }
 END
 
+TACTIC EXTEND TemplateCoq_quote_untyped_term
+    | [ "quote_untyped_term" uconstr(c) tactic(tac) ] ->
+      { (* quote the given term without typing, pass the result to t *)
+        Proofview.Goal.enter begin fun gl ->
+          let env = Proofview.Goal.env gl in
+          let sigma = Proofview.Goal.sigma gl in
+          (* let c = to_constr_evars sigma c in *)
+          let c = Constr_quoter.quote_untyped_term env sigma c.term in
+          ltac_apply tac (List.map to_ltac_val [EConstr.of_constr c])
+  end }
+END
+
 TACTIC EXTEND TemplateCoq_denote_term
     | [ "denote_term" constr(c) tactic(tac) ] ->
       { Proofview.Goal.enter (begin fun gl ->
@@ -167,7 +179,7 @@ TACTIC EXTEND TemplateCoq_denote_term
          let evm, c = Constr_denoter.denote_term env evm (to_constr_evars evm c) in
          Proofview.tclTHEN (Proofview.Unsafe.tclEVARS evm)
 	   (ltac_apply tac (List.map to_ltac_val [EConstr.of_constr c]))
-      end) }
+    end) }
 END
 
 TACTIC EXTEND TemplateCoq_run_template_program
