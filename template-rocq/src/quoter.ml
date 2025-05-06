@@ -636,10 +636,8 @@ struct
         Environ.env*Constr.t =
     (env, Term.it_mkProd_or_LetIn t params)
 
-  (* CHANGE: this is the only way (ugly) I found to construct [absrt_info] with empty fields,
-since  [absrt_info] is a private type *)
-  let empty_segment = Lib.section_segment_of_reference (Names.GlobRef.VarRef (Names.Id.of_string "blah"))
 (*
+  let empty_segment = Cooking.empty_cooking_info
   let quote_mut_ind env (mi:Declarations.mutual_inductive_body) =
    let t= Discharge.process_inductive empty_segment (Names.Cmap.empty,Names.Mindmap.empty) mi in
     let mf = Q.quote_mind_finiteness t.mind_entry_finite in
