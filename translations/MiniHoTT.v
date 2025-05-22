@@ -53,8 +53,8 @@ Class Transitive {A} (R : relation A) :=
   transitivity : forall x y z, R x y -> R y z -> R x z.
 
 Class PreOrder {A} (R : relation A) :=
-  { PreOrder_Reflexive : Reflexive R | 2 ;
-    PreOrder_Transitive : Transitive R | 2 }.
+  { PreOrder_Reflexive : Reflexive R ;
+    PreOrder_Transitive : Transitive R }.
 
 Global Existing Instance PreOrder_Reflexive.
 Global Existing Instance PreOrder_Transitive.
