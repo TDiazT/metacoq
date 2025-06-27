@@ -3199,7 +3199,8 @@ Proof.
     move=> /(correct_labelling_of_valuation_satisfies_iff HG').
     exists (labelling_of_valuation v'); split=> //.
     move=> z /[dup] hz /(is_graph_of_uctx_levels _ _ HG) ?.
-    rewrite -(val_valuation_of_labelling2 HG) // v'val //.
+    rewrite -[LHS](val_valuation_of_labelling2 HG) //.
+    rewrite v'val //.
   - move=> fsub v /(correct_labelling_of_valuation_satisfies_iff HG) hl.
     pose (l := labelling_of_valuation v).
     pose (Gl := relabel_on G G' l).
