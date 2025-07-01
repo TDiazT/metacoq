@@ -60,7 +60,7 @@ let fresh_env () =
 let to_constr_evars sigma c = EConstr.to_constr ~abort_on_undefined_evars:false sigma c
 
 
-let () = Vernacextend.static_vernac_extend ~plugin:(Some "rocq-metarocq-template-rocq.plugin") ~command:"TemplateRocq_Test_Quote" ~classifier:(fun _ -> Vernacextend.classify_as_query) ?entry:None 
+let () = Vernacextend.static_vernac_extend ~plugin:(Some "rocq-metarocq-template-rocq.plugin") ~command:"TemplateRocq_Test_Quote" ~classifier:(fun ~atts:_ _ -> Vernacextend.classify_as_query) ?entry:None 
          [(Vernacextend.TyML
          (false,
           Vernacextend.TyTerminal
@@ -87,7 +87,7 @@ let () = Vernacextend.static_vernac_extend ~plugin:(Some "rocq-metarocq-template
                atts)),
           None))]
 
-let () = Vernacextend.static_vernac_extend ~plugin:(Some "rocq-metarocq-template-rocq.plugin") ~command:"TemplateRocq_Quote_Definition" ~classifier:(fun _ -> Vernacextend.classify_as_sideeff) ?entry:None 
+let () = Vernacextend.static_vernac_extend ~plugin:(Some "rocq-metarocq-template-rocq.plugin") ~command:"TemplateRocq_Quote_Definition" ~classifier:(fun ~atts:_ _ -> Vernacextend.classify_as_sideeff) ?entry:None 
          [(Vernacextend.TyML
          (false,
           Vernacextend.TyTerminal
@@ -117,7 +117,7 @@ let () = Vernacextend.static_vernac_extend ~plugin:(Some "rocq-metarocq-template
                atts)),
           None))]
 
-let () = Vernacextend.static_vernac_extend ~plugin:(Some "rocq-metarocq-template-rocq.plugin") ~command:"TemplateRocq_Quote_Definition_Eval" ~classifier:(fun _ -> Vernacextend.classify_as_sideeff) ?entry:None 
+let () = Vernacextend.static_vernac_extend ~plugin:(Some "rocq-metarocq-template-rocq.plugin") ~command:"TemplateRocq_Quote_Definition_Eval" ~classifier:(fun ~atts:_ _ -> Vernacextend.classify_as_sideeff) ?entry:None 
          [(Vernacextend.TyML
          (false,
           Vernacextend.TyTerminal
@@ -154,7 +154,7 @@ let () = Vernacextend.static_vernac_extend ~plugin:(Some "rocq-metarocq-template
                atts)),
           None))]
 
-let () = Vernacextend.static_vernac_extend ~plugin:(Some "rocq-metarocq-template-rocq.plugin") ~command:"TemplateRocq_Quote_Recursively_Definition" ~classifier:(fun _ -> Vernacextend.classify_as_sideeff) ?entry:None 
+let () = Vernacextend.static_vernac_extend ~plugin:(Some "rocq-metarocq-template-rocq.plugin") ~command:"TemplateRocq_Quote_Recursively_Definition" ~classifier:(fun ~atts:_ _ -> Vernacextend.classify_as_sideeff) ?entry:None 
          [(Vernacextend.TyML
          (false,
           Vernacextend.TyTerminal
@@ -186,7 +186,7 @@ let () = Vernacextend.static_vernac_extend ~plugin:(Some "rocq-metarocq-template
                atts)),
           None))]
 
-let () = Vernacextend.static_vernac_extend ~plugin:(Some "rocq-metarocq-template-rocq.plugin") ~command:"TemplateRocq_Test_Unquote" ~classifier:(fun _ -> Vernacextend.classify_as_query) ?entry:None 
+let () = Vernacextend.static_vernac_extend ~plugin:(Some "rocq-metarocq-template-rocq.plugin") ~command:"TemplateRocq_Test_Unquote" ~classifier:(fun ~atts:_ _ -> Vernacextend.classify_as_query) ?entry:None 
          [(Vernacextend.TyML
          (false,
           Vernacextend.TyTerminal
@@ -213,7 +213,7 @@ let () = Vernacextend.static_vernac_extend ~plugin:(Some "rocq-metarocq-template
                atts)),
           None))]
 
-let () = Vernacextend.static_vernac_extend ~plugin:(Some "rocq-metarocq-template-rocq.plugin") ~command:"TemplateRocq_Make_Definition" ~classifier:(fun _ -> Vernacextend.classify_as_sideeff) ?entry:None 
+let () = Vernacextend.static_vernac_extend ~plugin:(Some "rocq-metarocq-template-rocq.plugin") ~command:"TemplateRocq_Make_Definition" ~classifier:(fun ~atts:_ _ -> Vernacextend.classify_as_sideeff) ?entry:None 
          [(Vernacextend.TyML
          (false,
           Vernacextend.TyTerminal
@@ -244,7 +244,7 @@ let () = Vernacextend.static_vernac_extend ~plugin:(Some "rocq-metarocq-template
                atts)),
           None))]
 
-let () = Vernacextend.static_vernac_extend ~plugin:(Some "rocq-metarocq-template-rocq.plugin") ~command:"TemplateRocq_Make_Inductive" ~classifier:(fun _ -> Vernacextend.classify_as_sideeff) ?entry:None 
+let () = Vernacextend.static_vernac_extend ~plugin:(Some "rocq-metarocq-template-rocq.plugin") ~command:"TemplateRocq_Make_Inductive" ~classifier:(fun ~atts:_ _ -> Vernacextend.classify_as_sideeff) ?entry:None 
          [(Vernacextend.TyML
          (false,
           Vernacextend.TyTerminal
@@ -271,7 +271,7 @@ let () = Vernacextend.static_vernac_extend ~plugin:(Some "rocq-metarocq-template
                atts)),
           None))]
 
-let () = Vernacextend.static_vernac_extend ~plugin:(Some "rocq-metarocq-template-rocq.plugin") ~command:"TemplateRocq_Run_Template_Program" ~classifier:(fun _ -> Vernacextend.classify_as_sideeff) ?entry:None 
+let () = Vernacextend.static_vernac_extend ~plugin:(Some "rocq-metarocq-template-rocq.plugin") ~command:"TemplateRocq_Run_Template_Program" ~classifier:(fun ~atts:_ _ -> Vernacextend.classify_as_sideeff) ?entry:None 
          [(Vernacextend.TyML
          (false,
           Vernacextend.TyTerminal
