@@ -98,7 +98,9 @@ struct
       | ACoq_tConst (s,u) ->
         let s = D.unquote_kn s in
         let evm, u = D.unquote_universe_instance evm u in
-        evm, Constr.mkConstU (Constant.make1 s, u)
+        (* XXX use the Environ API when available *)
+        let cst = Global.constant_of_delta_kn s in
+        evm, Constr.mkConstU (cst, u)
       | ACoq_tConstruct (i,idx,u) ->
         let ind = D.unquote_inductive i in
         let evm, u = D.unquote_universe_instance evm u in
