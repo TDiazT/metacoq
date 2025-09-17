@@ -1517,7 +1517,8 @@ Section WcbvEnv.
 
 End WcbvEnv.
 
-Scheme eval_nondep := Minimality for eval Sort Prop.
+(* we could register but then some variable names change *)
+#[register=no] Scheme eval_nondep := Minimality for eval Sort Prop.
 
 Lemma isLambda_mkApps f l : ~~ isLambda f -> ~~ EAst.isLambda (mkApps f l).
 Proof.
