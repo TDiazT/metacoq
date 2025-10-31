@@ -59,7 +59,6 @@ Logic1
 Logic2
 Number
 Relation
-EqdepFacts
 MRPrelude
 MRReflect
 ReflectEq
@@ -87,6 +86,7 @@ Sint63
 Show
 MRUtils
 Signature
+Logic0
 All_Forall
 MRFSets
 MRMSets
@@ -106,7 +106,6 @@ Reflect
 Pretty
 Common0
 Extractable
-Logic0
 EnvMap
 
 Tm_util
