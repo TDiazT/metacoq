@@ -27,7 +27,7 @@ struct
   type quoted_univ_level = Constr.t (* of type Universes.Level.t *)
   type quoted_univ_instance = Constr.t (* of type Universes.universe_instance *)
   type quoted_univ_context = Constr.t (* of type Universes.UContext.t *)
-  type quoted_univ_contextset = Constr.t (* of type Universes.ContextSet.t *)
+  type quoted_contextset = Constr.t (* of type Universes.ContextSet.t *)
   type quoted_abstract_univ_context = Constr.t (* of type Universes.AUContext.t *)
   type quoted_variance = Constr.t (* of type Universes.Variance.t *)
   type quoted_universes_decl = Constr.t (* of type Universes.universes_decl *)

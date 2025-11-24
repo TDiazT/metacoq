@@ -33,7 +33,7 @@ struct
   type quoted_univ_level = Universes0.Level.t
   type quoted_univ_instance = Universes0.Instance.t
   type quoted_univ_context = Universes0.UContext.t
-  type quoted_univ_contextset = Universes0.ContextSet.t
+  type quoted_contextset = Universes0.ContextSet.t
   type quoted_abstract_univ_context = Universes0.AUContext.t
   type quoted_variance = Universes0.Variance.t
   type quoted_universes_decl = Universes0.universes_decl
@@ -138,23 +138,23 @@ struct
   let quote_proj ind p a = { proj_ind = ind; proj_npars = p; proj_arg = a }
 
   let quote_constraint_type = function
-    | Univ.Lt -> Universes0.ConstraintType.Le BinNums.(Zpos Coq_xH)
-    | Univ.Le -> Universes0.ConstraintType.Le BinNums.Z0
-    | Univ.Eq -> Universes0.ConstraintType.Eq
+    | Univ.UnivConstraint.Lt -> Universes0.ConstraintType.Le BinNums.(Zpos Coq_xH)
+    | Univ.UnivConstraint.Le -> Universes0.ConstraintType.Le BinNums.Z0
+    | Univ.UnivConstraint.Eq -> Universes0.ConstraintType.Eq
 
   let is_Lt = function
-    | Univ.Lt -> true
+    | Univ.UnivConstraint.Lt -> true
     | _ -> false
 
   let is_Le = function
-    | Univ.Le -> true
+    | Univ.UnivConstraint.Le -> true
     | _ -> false
 
   let is_Eq = function
-    | Univ.Eq -> true
+    | Univ.UnivConstraint.Eq -> true
     | _ -> false
 
-  let quote_univ_constraint ((l, ct, l') : Univ.univ_constraint) : quoted_univ_constraint =
+  let quote_univ_constraint ((l, ct, l') : Univ.UnivConstraint.t) : quoted_univ_constraint =
     try ((quote_level l, quote_constraint_type ct), quote_level l')
     with e -> assert false
 
@@ -170,14 +170,14 @@ struct
     with e -> assert false
 
    (* (Prop, Le | Lt, l),  (Prop, Eq, Prop) -- trivial, (l, c, Prop)  -- unsatisfiable  *)
-  let rec constraints_ (cs : Univ.univ_constraint list) : quoted_univ_constraint list =
+  let rec constraints_ (cs : Univ.UnivConstraint.t list) : quoted_univ_constraint list =
     match cs with
     | [] -> []
     | (l, ct, l') :: cs' ->
       quote_univ_constraint (l,ct,l') :: constraints_ cs'
 
-  let quote_univ_constraints (c : Univ.Constraints.t) : quoted_univ_constraints =
-    let l = constraints_ (Univ.Constraints.elements c) in
+  let quote_univ_constraints (c : Univ.UnivConstraints.t) : quoted_univ_constraints =
+    let l = constraints_ (Univ.UnivConstraints.elements c) in
     Universes0.ConstraintSet.(List.fold_right add l empty)
 
   let quote_variance (v : UVars.Variance.t) =
@@ -194,12 +194,12 @@ struct
     let names = CArray.map_to_list quote_name uarr  in
     let levels = UVars.UContext.instance uctx  in
     let constraints = UVars.UContext.constraints uctx in
-    (names, (quote_univ_instance levels, quote_univ_constraints constraints))
+    (names, (quote_univ_instance levels, quote_univ_constraints (PConstraints.univs constraints)))
 
-  let quote_univ_contextset (uctx : Univ.ContextSet.t) : quoted_univ_contextset =
-    let levels = List.map quote_level (Univ.Level.Set.elements (Univ.ContextSet.levels uctx)) in
-    let constraints = Univ.ContextSet.constraints uctx in
-    (Universes0.LevelSetProp.of_list levels, quote_univ_constraints constraints)
+  let quote_contextset (uctx : PConstraints.ContextSet.t) : quoted_contextset =
+    let levels = List.map quote_level (Univ.Level.Set.elements (PConstraints.ContextSet.levels uctx)) in
+    let constraints = PConstraints.ContextSet.constraints uctx in
+    (Universes0.LevelSetProp.of_list levels, quote_univ_constraints (PConstraints.univs constraints))
 
   let quote_abstract_univ_context uctx : quoted_abstract_univ_context =
     let {UVars.quals = qnames; UVars.univs = unames} = UVars.AbstractContext.names uctx in
@@ -208,7 +208,7 @@ struct
     in
     let levels = CArray.map_to_list quote_name unames in
     let constraints = UVars.UContext.constraints (UVars.AbstractContext.repr uctx) in
-    (levels, quote_univ_constraints constraints)
+    (levels, quote_univ_constraints (PConstraints.univs constraints))
 
   let quote_context_decl na b t =
     { decl_name = na;

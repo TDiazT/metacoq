@@ -18,7 +18,7 @@ let pr_string l =
 let check env evm poly (c, ustate) =
   debug (fun () -> str"Quoting");
   let uctx = Evd.universe_context_set evm in
-  let env = if poly then env else Environ.push_context_set ~strict:true uctx env in
+  let env = if poly then env else Environ.push_context_set QGraph.Rigid ~strict:true uctx env in
   let prog = time (str"Quoting") (Ast_quoter.quote_term_rec ~bypass:true ~with_universes:true env evm) (EConstr.to_constr evm c) in
   let uctx =
     if poly then
@@ -66,7 +66,7 @@ let retypecheck_term_dependencies ~opaque_access env gr =
     let fake_inst = UVars.Instance.of_array (Array.mapi fake_quality qnames, Array.mapi fake_level unames) in
     let cu = (c, fake_inst) in
     let cbody, ctype, cstrs = Environ.constant_value_and_type env cu in
-    let env' = Environ.push_context (UVars.UContext.make names (fake_inst, cstrs)) env in
+    let env' = Environ.push_context QGraph.Internal (UVars.UContext.make names (fake_inst, cstrs)) env in
     typecheck env' ctype;
     Option.iter (typecheck env') cbody
   in
