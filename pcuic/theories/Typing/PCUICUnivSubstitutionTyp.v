@@ -342,7 +342,7 @@ Proof using Type.
   - intros p c u mdecl idecl cdecl pdecl isdecl args X X0 X1 X2 H u0 univs wfΣ' H0.
     rewrite subst_instance_subst. cbn.
     rewrite !subst_instance_two.
-    rewrite {4}/subst_instance /subst_instance_list /=.
+    rewrite {6}/subst_instance /subst_instance_list /=.
     rewrite map_rev.
     econstructor; eauto. 2:now rewrite length_map.
     eapply X2 in H0; tas. rewrite subst_instance_mkApps in H0.
