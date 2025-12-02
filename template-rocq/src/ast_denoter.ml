@@ -32,7 +32,7 @@ struct
   type quoted_univ_level = Universes0.Level.t
   type quoted_univ_instance = Universes0.Instance.t
   type quoted_univ_context = Universes0.UContext.t
-  type quoted_univ_contextset = Universes0.ContextSet.t
+  type quoted_contextset = Universes0.ContextSet.t
   type quoted_abstract_univ_context = Universes0.AUContext.t
   type quoted_variance = Universes0.Variance.t
   type quoted_universes_decl = Universes0.universes_decl

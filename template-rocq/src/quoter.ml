@@ -107,17 +107,17 @@ sig
   val quote_float64 : Float64.t -> quoted_float64
   val quote_pstring : Pstring.t -> quoted_pstring
 
-  val quote_constraint_type : Univ.constraint_type -> quoted_constraint_type
-  val quote_univ_constraint : Univ.univ_constraint -> quoted_univ_constraint
+  val quote_constraint_type : Univ.UnivConstraint.kind -> quoted_constraint_type
+  val quote_univ_constraint : Univ.UnivConstraint.t -> quoted_univ_constraint
   val quote_univ_level : Univ.Level.t -> quoted_univ_level
   val quote_univ_instance : UVars.Instance.t -> quoted_univ_instance
-  val quote_univ_constraints : Univ.Constraints.t -> quoted_univ_constraints
+  val quote_univ_constraints : Univ.UnivConstraints.t -> quoted_univ_constraints
   val quote_univ_context : UVars.UContext.t -> quoted_univ_context
-  val quote_univ_contextset : Univ.ContextSet.t -> quoted_univ_contextset
+  val quote_contextset : PConstraints.ContextSet.t -> quoted_contextset
   val quote_variance : UVars.Variance.t -> quoted_variance
   val quote_abstract_univ_context : UVars.AbstractContext.t -> quoted_abstract_univ_context
 
-  val mkMonomorphic_entry : quoted_univ_contextset -> quoted_universes_entry
+  val mkMonomorphic_entry : quoted_contextset -> quoted_universes_entry
   val mkPolymorphic_entry : quoted_univ_context -> quoted_universes_entry
 
   val mkMonomorphic_ctx : unit -> quoted_universes_decl
@@ -178,7 +178,7 @@ sig
 
   val quote_retroknowledge : pre_quoted_retroknowledge -> quoted_retroknowledge
 
-  val mk_global_env : quoted_univ_contextset -> quoted_global_declarations -> quoted_retroknowledge -> quoted_global_env
+  val mk_global_env : quoted_contextset -> quoted_global_declarations -> quoted_retroknowledge -> quoted_global_env
   val mk_program : quoted_global_env -> t -> quoted_program
 end
 
@@ -196,7 +196,7 @@ struct
     | Polymorphic ctx -> UVars.AbstractContext.repr ctx
 
   let quote_universes_entry = function
-    | Monomorphic_entry -> Q.mkMonomorphic_entry (Q.quote_univ_contextset Univ.ContextSet.empty)
+    | Monomorphic_entry -> Q.mkMonomorphic_entry (Q.quote_contextset PConstraints.ContextSet.empty)
     | Polymorphic_entry ctx -> Q.mkPolymorphic_entry (Q.quote_univ_context ctx)
 
   let quote_universes_decl decl templ =
@@ -227,13 +227,14 @@ struct
         | x :: [] -> acc
         | x :: rest ->
           List.fold_right (fun p (levels, cstrs) ->
-            (Univ.Level.Set.add p levels, Univ.Constraints.add (x, Univ.Eq, p) cstrs)) rest acc)
+            (Univ.Level.Set.add p levels, Univ.UnivConstraints.add (x, Univ.UnivConstraint.Eq, p) cstrs)) rest acc)
         eqs (levels, cstrs)
     in
     let levels = Univ.Level.Set.add Univ.Level.set levels in
-    debug Pp.(fun () -> str"Universe context: " ++ Univ.ContextSet.pr Univ.Level.raw_pr (levels, cstrs));
+    let cstrs = PConstraints.of_univs cstrs in
+    debug Pp.(fun () -> str"Universe context: " ++ PConstraints.ContextSet.pr Sorts.QVar.raw_pr Univ.Level.raw_pr (levels, cstrs));
     time (Pp.str"Quoting universe context")
-      (fun uctx -> Q.quote_univ_contextset uctx) (levels, cstrs)
+      (fun uctx -> Q.quote_contextset uctx) (levels, cstrs)
 
   let quote_inductive' (ind, i) : Q.quoted_inductive =
     Q.quote_inductive (Q.quote_kn (Names.MutInd.canonical ind), Q.quote_int i)
@@ -548,7 +549,7 @@ struct
                   | Opaqueproof.PrivateMonomorphic () -> Some c
                   | Opaqueproof.PrivatePolymorphic csts ->
                     let () =
-                      if not (Univ.ContextSet.is_empty csts) then
+                      if not (PConstraints.ContextSet.is_empty csts) then
                         warn_ignoring_private_polymorphic_universes ()
                     in Some c
                 else None
@@ -604,7 +605,7 @@ struct
       else
         (debug Pp.(fun () -> str"Skipping universes: ");
          time (Pp.str"Quoting empty universe context")
-           (fun uctx -> Q.quote_univ_contextset uctx) Univ.ContextSet.empty)
+           (fun uctx -> Q.quote_contextset uctx) PConstraints.ContextSet.empty)
     in
     let retro =
       let retro = Environ.retroknowledge env in

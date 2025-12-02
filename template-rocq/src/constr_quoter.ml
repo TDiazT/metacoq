@@ -219,13 +219,13 @@ struct
     let levels' =  to_coq_listl tlevel (List.map quote_level levels) in
     constr_mkApp (tLevelSet_of_list, [|levels'|])
 
-  let quote_constraint_type (c : Univ.constraint_type) =
+  let quote_constraint_type (c : Univ.UnivConstraint.kind) =
     match c with
     | Lt -> Lazy.force tunivLt
     | Le -> Lazy.force tunivLe0
     | Eq -> Lazy.force tunivEq
 
-  let quote_univ_constraint ((l1, ct, l2) : Univ.univ_constraint) =
+  let quote_univ_constraint ((l1, ct, l2) : Univ.UnivConstraint.t) =
     let l1 = quote_level l1 in
     let l2 = quote_level l2 in
     let ct = quote_constraint_type ct in
@@ -242,26 +242,26 @@ struct
     to_coq_listl tlevel (CArray.map_to_list quote_level uarr)
 
   let is_Lt = function
-    | Univ.Lt -> true
+    | Univ.UnivConstraint.Lt -> true
     | _ -> false
 
   let is_Le = function
-    | Univ.Le -> true
+    | Univ.UnivConstraint.Le -> true
     | _ -> false
 
   let is_Eq = function
-    | Univ.Eq -> true
+    | Univ.UnivConstraint.Eq -> true
     | _ -> false
 
    (* (Prop, Le | Lt, l),  (Prop, Eq, Prop) -- trivial, (l, c, Prop)  -- unsatisfiable  *)
-  let rec constraints_ (cs : Univ.univ_constraint list) =
+  let rec constraints_ (cs : Univ.UnivConstraint.t list) =
     match cs with
     | [] -> []
     | (l, ct, l') :: cs' ->
       quote_univ_constraint (l,ct,l') :: constraints_ cs'
 
   let quote_univ_constraints const =
-    let const = Univ.Constraints.elements const in
+    let const = Univ.UnivConstraints.elements const in
     List.fold_left (fun tm c ->
         constr_mkApp (tConstraintSetadd, [| c; tm|])
       ) (Lazy.force tConstraintSetempty) (constraints_ const)
@@ -276,9 +276,9 @@ struct
     let var_list = CArray.map_to_list quote_variance var in
     to_coq_list (Lazy.force tVariance) var_list
 
-  let quote_univ_contextset uctx =
-    let levels' = quote_levelset (ContextSet.levels uctx) in
-    let const' = quote_univ_constraints (ContextSet.constraints uctx) in
+  let quote_contextset uctx =
+    let levels' = quote_levelset (PConstraints.ContextSet.levels uctx) in
+    let const' = quote_univ_constraints (PConstraints.ContextSet.univ_constraints uctx) in
     pairl tLevelSet tConstraintSet levels' const'
 
   let quote_univ_context uctx =
@@ -288,7 +288,7 @@ struct
     in
     let idents = to_coq_listl tname (CArray.map_to_list quote_name uarr) in
     let inst' = quote_univ_instance (UVars.UContext.instance uctx) in
-    let const' = quote_univ_constraints (UVars.UContext.constraints uctx) in
+    let const' = quote_univ_constraints (UVars.UContext.univ_constraints uctx) in
     let p = constr_mkApp (tUContextmake', [|inst'; const'|]) in
     constr_mkApp (tUContextmake, [|idents; p |])
 
@@ -306,7 +306,7 @@ struct
         CErrors.user_err Pp.(str "Quoting sort polymorphic abstract universe context not yet supported.")
     in
     let idents = to_coq_listl tname (CArray.map_to_list quote_name uarr) in
-    let const' = quote_univ_constraints (UVars.UContext.constraints (UVars.AbstractContext.repr uctx)) in
+    let const' = quote_univ_constraints (UVars.UContext.univ_constraints (UVars.AbstractContext.repr uctx)) in
     constr_mkApp (tAUContextmake, [|idents; const'|])
 
   let mkMonomorphic_ctx () = Lazy.force cMonomorphic_ctx
@@ -324,7 +324,7 @@ struct
     match uctx with
     | Entries.Monomorphic_entry ->
       let f inst = assert (UVars.Instance.is_empty inst); UVars.empty_bound_names in
-      let ctx = quote_univ_context (UVars.UContext.of_context_set f Sorts.QVar.Set.empty Univ.ContextSet.empty) in
+      let ctx = quote_univ_context (UVars.UContext.of_context_set f Sorts.QVar.Set.empty PConstraints.ContextSet.empty) in
       constr_mkApp (cMonomorphic_entry, [| ctx |])
     | Entries.Polymorphic_entry uctx ->
       let ctx = quote_univ_context uctx in

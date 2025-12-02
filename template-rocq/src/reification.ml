@@ -27,7 +27,7 @@ sig
   type quoted_univ_level
   type quoted_univ_instance
   type quoted_univ_context
-  type quoted_univ_contextset
+  type quoted_contextset
   type quoted_abstract_univ_context
   type quoted_variance
   type quoted_universes_decl
