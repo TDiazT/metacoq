@@ -323,8 +323,7 @@ struct
   let quote_inductive_universes uctx =
     match uctx with
     | Entries.Monomorphic_entry ->
-      let f inst = assert (UVars.Instance.is_empty inst); UVars.empty_bound_names in
-      let ctx = quote_univ_context (UVars.UContext.of_context_set f Sorts.QVar.Set.empty PConstraints.ContextSet.empty) in
+      let ctx = quote_univ_context UVars.UContext.empty in
       constr_mkApp (cMonomorphic_entry, [| ctx |])
     | Entries.Polymorphic_entry uctx ->
       let ctx = quote_univ_context uctx in

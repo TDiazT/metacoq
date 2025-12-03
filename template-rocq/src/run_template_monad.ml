@@ -288,7 +288,8 @@ let unquote_mutual_inductive_entry env evm trm (* of type mutual_inductive_entry
                let qs, us = UVars.Instance.to_array u in
                { UVars.quals = Array.make (Array.length qs) Anonymous; UVars.univs = Array.make (Array.length us) Anonymous}
              in
-             let uctx = UVars.UContext.of_context_set mk_anon_names Sorts.QVar.Set.empty ctx in
+             let (uvar, (qcst, ucst)) = ctx in
+             let uctx = UVars.UContext.of_context_set mk_anon_names ((Sorts.QVar.Set.empty, qcst), (uvar, ucst))  in
              let default_univs = UVars.UContext.instance uctx in
              PConstraints.ContextSet.empty, Entries.Template_ind_entry { uctx; default_univs }
           else ctx, Entries.Monomorphic_ind_entry
@@ -309,14 +310,17 @@ let declare_inductive (env: Environ.env) (evm: Evd.evar_map) (infer_univs : bool
   let mind = reduce_all env evm mind in
   let evm' = Evd.from_env env in
   let evm', ctx, mind = unquote_mutual_inductive_entry env evm' mind in
-  let () = Global.push_context_set QGraph.Rigid ctx in
+  let () = Global.push_qualities QGraph.Rigid (PConstraints.ContextSet.sort_context_set ctx) in (* XXX *)
+  let () = Global.push_context_set (PConstraints.ContextSet.univ_context_set ctx) in
   let evm, mind =
     if infer_univs then
       let ctx, mind = Tm_util.RetypeMindEntry.infer_mentry_univs env evm' mind in
-      debug (fun () -> Pp.(str "Declaring universe context " ++
+      let () = debug (fun () -> Pp.(str "Declaring universe context " ++
                           PConstraints.ContextSet.pr UnivNames.pr_quality_with_global_universes
-                            UnivNames.pr_level_with_global_universes ctx));
-      Global.push_context_set QGraph.Rigid ctx;
+                            UnivNames.pr_level_with_global_universes ctx))
+      in
+      let () = Global.push_qualities QGraph.Rigid (PConstraints.ContextSet.sort_context_set ctx) in (* XXX *)
+      let () = Global.push_context_set (PConstraints.ContextSet.univ_context_set ctx) in
       Evd.merge_context_set Evd.UnivRigid evm ctx, mind
     else evm, mind
   in
