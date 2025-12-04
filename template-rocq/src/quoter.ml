@@ -549,7 +549,7 @@ struct
                   | Opaqueproof.PrivateMonomorphic () -> Some c
                   | Opaqueproof.PrivatePolymorphic csts ->
                     let () =
-                      if not (PConstraints.ContextSet.is_empty csts) then
+                      if not (Univ.ContextSet.is_empty csts) then
                         warn_ignoring_private_polymorphic_universes ()
                     in Some c
                 else None
