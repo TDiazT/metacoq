@@ -283,12 +283,11 @@ let tmInductive (infer_univs : bool) (mie : mutual_inductive_entry) : unit tm =
       if infer_univs then
         let evm = Evd.from_env env in
         let ctx, mie = Tm_util.RetypeMindEntry.infer_mentry_univs env evm mie in
-        let () = Global.push_qualities QGraph.Rigid (PConstraints.ContextSet.sort_context_set ctx) in (* XXX *)
-        let () = Global.push_context_set (PConstraints.ContextSet.univ_context_set ctx) in
+        let () = Global.push_context_set ctx in
         mie
       else mie
     in
-    let names = (UState.Monomorphic_entry PConstraints.ContextSet.empty, UnivNames.empty_binders) in
+    let names = (UState.Monomorphic_entry Univ.ContextSet.empty, UnivNames.empty_binders) in
     ignore (DeclareInd.declare_mutual_inductive_with_eliminations mie names []) ;
     success ~st (Global.env ()) evd ()
 
