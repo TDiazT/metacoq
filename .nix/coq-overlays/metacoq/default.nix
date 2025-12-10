@@ -1,8 +1,8 @@
 {
   lib,
-  mkRocqDerivation,
+  mkCoqDerivation,
   single ? false,
-  rocq-core,
+  coq,
   equations,
   stdlib,
   version ? null,
@@ -11,18 +11,23 @@
 let
   repo = "metarocq";
   owner = "MetaRocq";
-  defaultVersion = null;
+  defaultVersion = lib.switch coq.coq-version [
+    { case = "9.0"; out = "1.4-9.0"; }
+  ] null;
+  release = {
+    "1.4-9.0".sha256 = "sha256-5QecDAMkvgfDPZ7/jDfnOgcE+Eb1LTAozP7nz6nkuxg=";
+  };
   releaseRev = v: "v${v}";
 
-  # list of core MetaRocq packages and their dependencies
+  # list of core MetaCoq packages and their dependencies
   packages = {
     "utils" = [ ];
     "common" = [ "utils" ];
-    "template-rocq" = [ "common" ];
+    "template-coq" = [ "common" ];
     "pcuic" = [ "common" ];
     "safechecker" = [ "pcuic" ];
     "template-pcuic" = [
-      "template-rocq"
+      "template-coq"
       "pcuic"
     ];
     "erasure" = [
@@ -30,7 +35,7 @@ let
       "template-pcuic"
     ];
     "quotation" = [
-      "template-rocq"
+      "template-coq"
       "pcuic"
       "template-pcuic"
     ];
@@ -42,7 +47,7 @@ let
       "template-pcuic"
       "erasure"
     ];
-    "translations" = [ "template-rocq" ];
+    "translations" = [ "template-coq" ];
     "all" = [
       "safechecker-plugin"
       "erasure-plugin"
@@ -51,26 +56,27 @@ let
     ];
   };
 
-  template-rocq = metarocq_ "template-rocq";
+  template-coq = metacoq_ "template-coq";
 
-  metarocq_ =
+  metacoq_ =
     package:
     let
-      metarocq-deps = lib.optionals (package != "single") (map metarocq_ packages.${package});
+      metacoq-deps = lib.optionals (package != "single") (map metacoq_ packages.${package});
       pkgpath = if package == "single" then "./" else "./${package}";
-      pname = if package == "all" then "metarocq" else "metarocq-${package}";
+      pname = if package == "all" then "metacoq" else "metacoq-${package}";
       pkgallMake = ''
         mkdir all
         echo "all:" > all/Makefile
         echo "install:" >> all/Makefile
       '';
       derivation =
-        (mkRocqDerivation (
+        (mkCoqDerivation (
           {
             inherit
               version
               pname
               defaultVersion
+              release
               releaseRev
               repo
               owner
@@ -80,25 +86,25 @@ let
             propagatedBuildInputs = [
               equations
               stdlib
-              rocq-core.ocamlPackages.zarith
-              rocq-core.ocamlPackages.stdlib-shims
-            ] ++ metarocq-deps;
+              coq.ocamlPackages.zarith
+              coq.ocamlPackages.stdlib-shims
+            ] ++ metacoq-deps;
 
             patchPhase =
                 ''
                   patchShebangs ./configure.sh
-                  patchShebangs ./template-rocq/update_plugin.sh
-                  patchShebangs ./template-rocq/gen-src/to-lower.sh
+                  patchShebangs ./template-coq/update_plugin.sh
+                  patchShebangs ./template-coq/gen-src/to-lower.sh
                   patchShebangs ./safechecker-plugin/clean_extraction.sh
                   patchShebangs ./erasure-plugin/clean_extraction.sh
                   echo "CAMLFLAGS+=-w -60 # Unused module" >> ./safechecker/Makefile.plugin.local
-                  sed -i -e 's/mv $i $newi;/mv $i tmp; mv tmp $newi;/' ./template-rocq/gen-src/to-lower.sh ./safechecker-plugin/clean_extraction.sh ./erasure-plugin/clean_extraction.sh
+                  sed -i -e 's/mv $i $newi;/mv $i tmp; mv tmp $newi;/' ./template-coq/gen-src/to-lower.sh ./safechecker-plugin/clean_extraction.sh ./erasure-plugin/clean_extraction.sh
                 '';
 
             configurePhase =
               lib.optionalString (package == "all") pkgallMake
               + ''
-                touch ${pkgpath}/metarocq-config
+                touch ${pkgpath}/metacoq-config
               ''
               +
                 lib.optionalString
@@ -111,7 +117,7 @@ let
                     "translations"
                   ])
                   ''
-                    echo  "-I ${template-rocq}/lib/coq/${rocq-core.rocq-version}/user-contrib/MetaRocq/Template/" > ${pkgpath}/metarocq-config
+                    echo  "-I ${template-coq}/lib/coq/${coq.coq-version}/user-contrib/MetaCoq/Template/" > ${pkgpath}/metacoq-config
                   ''
               + lib.optionalString (package == "single") ''
                 ./configure.sh local
@@ -128,10 +134,10 @@ let
             };
           }
           // lib.optionalAttrs (package != "single") {
-            passthru = lib.mapAttrs (package: deps: metarocq_ package) packages;
+            passthru = lib.mapAttrs (package: deps: metacoq_ package) packages;
           }
         ));
     in
     derivation;
 in
-metarocq_ (if single then "single" else "all")
+metacoq_ (if single then "single" else "all")

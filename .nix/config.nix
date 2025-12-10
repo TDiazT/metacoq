@@ -13,6 +13,8 @@
   ## when calling `nix-shell` and `nix-build` without the `--argstr job` argument
   shell-attribute = "equations";
 
+  no-rocq-yet = true;
+
   ## Maybe the shortname of the library is different from
   ## the name of the nixpkgs attribute, if so, set it here:
   # pname = "{{shortname}}";

@@ -124,8 +124,13 @@ jobs:
         "rocq-dev" --argstr job "equations"
   metarocq:
     needs:
-    - rocq-core
+    - coq
+    - equations
     - stdlib
+    - metarocq-safechecker-plugin
+    - metarocq-erasure-plugin
+    - metarocq-translations
+    - metarocq-quotation
     runs-on: ubuntu-latest
     steps:
     - name: Determine which commit to initially checkout
@@ -175,13 +180,33 @@ jobs:
         \n    sleep 30\n  fi\nelse\n  echo \"CI target already built\"\n  echo \"\
         status=fetched\" >> $GITHUB_OUTPUT\nfi\n"
     - if: steps.stepCheck.outputs.status != 'fetched'
-      name: 'Building/fetching previous CI target: rocq-core'
+      name: 'Building/fetching previous CI target: coq'
       run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle 
-        "rocq-dev" --argstr job "rocq-core"
+        "rocq-dev" --argstr job "coq"
+    - if: steps.stepCheck.outputs.status != 'fetched'
+      name: 'Building/fetching previous CI target: equations'
+      run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle 
+        "rocq-dev" --argstr job "equations"
     - if: steps.stepCheck.outputs.status != 'fetched'
       name: 'Building/fetching previous CI target: stdlib'
       run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle 
         "rocq-dev" --argstr job "stdlib"
+    - if: steps.stepCheck.outputs.status != 'fetched'
+      name: 'Building/fetching previous CI target: metarocq-safechecker-plugin'
+      run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle 
+        "rocq-dev" --argstr job "metarocq-safechecker-plugin"
+    - if: steps.stepCheck.outputs.status != 'fetched'
+      name: 'Building/fetching previous CI target: metarocq-erasure-plugin'
+      run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle 
+        "rocq-dev" --argstr job "metarocq-erasure-plugin"
+    - if: steps.stepCheck.outputs.status != 'fetched'
+      name: 'Building/fetching previous CI target: metarocq-translations'
+      run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle 
+        "rocq-dev" --argstr job "metarocq-translations"
+    - if: steps.stepCheck.outputs.status != 'fetched'
+      name: 'Building/fetching previous CI target: metarocq-quotation'
+      run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle 
+        "rocq-dev" --argstr job "metarocq-quotation"
     - if: steps.stepCheck.outputs.status != 'fetched'
       name: Building/fetching current CI target
       run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle 
@@ -190,6 +215,7 @@ jobs:
     needs:
     - coq
     - equations
+    - stdlib
     - metarocq-utils
     runs-on: ubuntu-latest
     steps:
@@ -248,6 +274,10 @@ jobs:
       run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle 
         "rocq-dev" --argstr job "equations"
     - if: steps.stepCheck.outputs.status != 'fetched'
+      name: 'Building/fetching previous CI target: stdlib'
+      run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle 
+        "rocq-dev" --argstr job "stdlib"
+    - if: steps.stepCheck.outputs.status != 'fetched'
       name: 'Building/fetching previous CI target: metarocq-utils'
       run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle 
         "rocq-dev" --argstr job "metarocq-utils"
@@ -259,6 +289,7 @@ jobs:
     needs:
     - coq
     - equations
+    - stdlib
     - metarocq-safechecker
     - metarocq-template-pcuic
     runs-on: ubuntu-latest
@@ -318,6 +349,10 @@ jobs:
       run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle 
         "rocq-dev" --argstr job "equations"
     - if: steps.stepCheck.outputs.status != 'fetched'
+      name: 'Building/fetching previous CI target: stdlib'
+      run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle 
+        "rocq-dev" --argstr job "stdlib"
+    - if: steps.stepCheck.outputs.status != 'fetched'
       name: 'Building/fetching previous CI target: metarocq-safechecker'
       run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle 
         "rocq-dev" --argstr job "metarocq-safechecker"
@@ -333,6 +368,7 @@ jobs:
     needs:
     - coq
     - equations
+    - stdlib
     - metarocq-template-pcuic
     - metarocq-erasure
     runs-on: ubuntu-latest
@@ -392,6 +428,10 @@ jobs:
       run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle 
         "rocq-dev" --argstr job "equations"
     - if: steps.stepCheck.outputs.status != 'fetched'
+      name: 'Building/fetching previous CI target: stdlib'
+      run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle 
+        "rocq-dev" --argstr job "stdlib"
+    - if: steps.stepCheck.outputs.status != 'fetched'
       name: 'Building/fetching previous CI target: metarocq-template-pcuic'
       run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle 
         "rocq-dev" --argstr job "metarocq-template-pcuic"
@@ -407,6 +447,7 @@ jobs:
     needs:
     - coq
     - equations
+    - stdlib
     - metarocq-common
     runs-on: ubuntu-latest
     steps:
@@ -465,6 +506,10 @@ jobs:
       run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle 
         "rocq-dev" --argstr job "equations"
     - if: steps.stepCheck.outputs.status != 'fetched'
+      name: 'Building/fetching previous CI target: stdlib'
+      run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle 
+        "rocq-dev" --argstr job "stdlib"
+    - if: steps.stepCheck.outputs.status != 'fetched'
       name: 'Building/fetching previous CI target: metarocq-common'
       run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle 
         "rocq-dev" --argstr job "metarocq-common"
@@ -476,6 +521,7 @@ jobs:
     needs:
     - coq
     - equations
+    - stdlib
     - metarocq-template-rocq
     - metarocq-pcuic
     - metarocq-template-pcuic
@@ -536,6 +582,10 @@ jobs:
       run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle 
         "rocq-dev" --argstr job "equations"
     - if: steps.stepCheck.outputs.status != 'fetched'
+      name: 'Building/fetching previous CI target: stdlib'
+      run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle 
+        "rocq-dev" --argstr job "stdlib"
+    - if: steps.stepCheck.outputs.status != 'fetched'
       name: 'Building/fetching previous CI target: metarocq-template-rocq'
       run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle 
         "rocq-dev" --argstr job "metarocq-template-rocq"
@@ -555,6 +605,7 @@ jobs:
     needs:
     - coq
     - equations
+    - stdlib
     - metarocq-pcuic
     runs-on: ubuntu-latest
     steps:
@@ -613,6 +664,10 @@ jobs:
       run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle 
         "rocq-dev" --argstr job "equations"
     - if: steps.stepCheck.outputs.status != 'fetched'
+      name: 'Building/fetching previous CI target: stdlib'
+      run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle 
+        "rocq-dev" --argstr job "stdlib"
+    - if: steps.stepCheck.outputs.status != 'fetched'
       name: 'Building/fetching previous CI target: metarocq-pcuic'
       run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle 
         "rocq-dev" --argstr job "metarocq-pcuic"
@@ -624,6 +679,7 @@ jobs:
     needs:
     - coq
     - equations
+    - stdlib
     - metarocq-template-pcuic
     - metarocq-safechecker
     runs-on: ubuntu-latest
@@ -683,6 +739,10 @@ jobs:
       run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle 
         "rocq-dev" --argstr job "equations"
     - if: steps.stepCheck.outputs.status != 'fetched'
+      name: 'Building/fetching previous CI target: stdlib'
+      run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle 
+        "rocq-dev" --argstr job "stdlib"
+    - if: steps.stepCheck.outputs.status != 'fetched'
       name: 'Building/fetching previous CI target: metarocq-template-pcuic'
       run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle 
         "rocq-dev" --argstr job "metarocq-template-pcuic"
@@ -698,6 +758,7 @@ jobs:
     needs:
     - coq
     - equations
+    - stdlib
     - metarocq-template-rocq
     - metarocq-pcuic
     runs-on: ubuntu-latest
@@ -757,6 +818,10 @@ jobs:
       run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle 
         "rocq-dev" --argstr job "equations"
     - if: steps.stepCheck.outputs.status != 'fetched'
+      name: 'Building/fetching previous CI target: stdlib'
+      run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle 
+        "rocq-dev" --argstr job "stdlib"
+    - if: steps.stepCheck.outputs.status != 'fetched'
       name: 'Building/fetching previous CI target: metarocq-template-rocq'
       run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle 
         "rocq-dev" --argstr job "metarocq-template-rocq"
@@ -772,6 +837,7 @@ jobs:
     needs:
     - coq
     - equations
+    - stdlib
     - metarocq-common
     runs-on: ubuntu-latest
     steps:
@@ -830,6 +896,10 @@ jobs:
       run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle 
         "rocq-dev" --argstr job "equations"
     - if: steps.stepCheck.outputs.status != 'fetched'
+      name: 'Building/fetching previous CI target: stdlib'
+      run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle 
+        "rocq-dev" --argstr job "stdlib"
+    - if: steps.stepCheck.outputs.status != 'fetched'
       name: 'Building/fetching previous CI target: metarocq-common'
       run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle 
         "rocq-dev" --argstr job "metarocq-common"
@@ -841,6 +911,7 @@ jobs:
     needs:
     - coq
     - equations
+    - stdlib
     - metarocq-template-rocq
     runs-on: ubuntu-latest
     steps:
@@ -899,6 +970,10 @@ jobs:
       run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle 
         "rocq-dev" --argstr job "equations"
     - if: steps.stepCheck.outputs.status != 'fetched'
+      name: 'Building/fetching previous CI target: stdlib'
+      run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle 
+        "rocq-dev" --argstr job "stdlib"
+    - if: steps.stepCheck.outputs.status != 'fetched'
       name: 'Building/fetching previous CI target: metarocq-template-rocq'
       run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle 
         "rocq-dev" --argstr job "metarocq-template-rocq"
@@ -910,6 +985,7 @@ jobs:
     needs:
     - coq
     - equations
+    - stdlib
     runs-on: ubuntu-latest
     steps:
     - name: Determine which commit to initially checkout
@@ -966,6 +1042,10 @@ jobs:
       name: 'Building/fetching previous CI target: equations'
       run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle 
         "rocq-dev" --argstr job "equations"
+    - if: steps.stepCheck.outputs.status != 'fetched'
+      name: 'Building/fetching previous CI target: stdlib'
+      run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle 
+        "rocq-dev" --argstr job "stdlib"
     - if: steps.stepCheck.outputs.status != 'fetched'
       name: Building/fetching current CI target
       run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle 
