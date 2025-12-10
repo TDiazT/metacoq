@@ -11,12 +11,7 @@
 let
   repo = "metarocq";
   owner = "MetaRocq";
-  defaultVersion = lib.switch rocq-core.rocq-version [
-    { case = "9.0"; out = "1.4-9.0"; }
-  ] null;
-  release = {
-    "1.4-9.0".sha256 = "sha256-5QecDAMkvgfDPZ7/jDfnOgcE+Eb1LTAozP7nz6nkuxg=";
-  };
+  defaultVersion = null;
   releaseRev = v: "v${v}";
 
   # list of core MetaRocq packages and their dependencies
@@ -76,7 +71,6 @@ let
               version
               pname
               defaultVersion
-              release
               releaseRev
               repo
               owner
