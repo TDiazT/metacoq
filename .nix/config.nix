@@ -11,7 +11,9 @@
 
   ## If you want to select a different attribute (to build from the local sources as well)
   ## when calling `nix-shell` and `nix-build` without the `--argstr job` argument
-  # shell-attribute = "{{nix_name}}";
+  shell-attribute = "equations";
+
+  no-rocq-yet = true;
 
   ## Maybe the shortname of the library is different from
   ## the name of the nixpkgs attribute, if so, set it here:
@@ -24,6 +26,8 @@
   ## /!\ Remove this field as soon as the package is available on nixpkgs.
   ## /!\ Manual overlays in `.nix/coq-overlays` should be preferred then.
   # buildInputs = [ ];
+  buildInputs = [ "equations" ];
+  nativeBuildInputs = [ "equations" ];
 
   ## Indicate the relative location of your _CoqProject
   ## If not specified, it defaults to "_CoqProject"
@@ -36,6 +40,19 @@
   # MetaRocq is expected to be compatible with a single coq version
   # The name of the bundle should finish with the coq version to use
   # cachedMake.sh
+  bundles."rocq-9.1" = {
+    rocqPackages.rocq-core.override.version = "9.1";
+    # coqPackages.metarocq.override.version = ;
+    # rocqPackages.stdlib.override.version = "9.0.0";
+    coqPackages.equations.override.version = "v1.3.1-9.1";
+    coqPackages.equations.job = false;
+    coqPackages.coq.override.version = "9.1";
+    coqPackages.stdlib.override.version = "9.0.0";
+    coqPackages.stdlib.job = false;
+    
+    push-branches = ["9.1"];
+  };
+
   bundles."rocq-dev" = {
     rocqPackages.rocq-core.override.version = "master";
     rocqPackages.stdlib.override.version = "master";
@@ -45,6 +62,7 @@
 
     push-branches = ["main"];
   };
+
 
   ## Cachix caches to use in CI
   ## Below we list some standard ones
