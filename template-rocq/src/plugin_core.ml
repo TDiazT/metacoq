@@ -84,7 +84,7 @@ let tmEval (rd : reduction_strategy) (t : term) : term tm =
     let evd,t' = reduce env evd rd t in
     k ~st env evd t'
 
-let tmDefinition (nm : ident) ?poly:(poly=false) ?opaque:(opaque=false) (typ : term option) (body : term) : kername tm =
+let tmDefinition (nm : ident) ?(poly=PolyFlags.default) ?opaque:(opaque=false) (typ : term option) (body : term) : kername tm =
   fun ~st env evm success _fail ->
     let cinfo = Declare.CInfo.make ~name:nm ~typ:(Option.map EConstr.of_constr typ) () in
     let info = Declare.Info.make ~poly ~kind:(Decls.(IsDefinition Definition)) () in
@@ -93,7 +93,7 @@ let tmDefinition (nm : ident) ?poly:(poly=false) ?opaque:(opaque=false) (typ : t
     let evm = Evd.from_env env in
     success ~st env evm (Names.Constant.canonical (Globnames.destConstRef n))
 
-let tmAxiom (nm : ident) ?poly:(poly=false) (typ : term) : kername tm =
+let tmAxiom (nm : ident) ?(poly=PolyFlags.default) (typ : term) : kername tm =
   fun ~st env evm success _fail ->
     let univs = Evd.univ_entry ~poly evm in
     let param =
@@ -108,7 +108,7 @@ let tmAxiom (nm : ident) ?poly:(poly=false) (typ : term) : kername tm =
     success ~st (Global.env ()) evm (Names.Constant.canonical n)
 
 (* this generates a lemma leaving a hole *)
-let tmLemma (nm : ident) ?poly:(poly=false)(ty : term) : kername tm =
+let tmLemma (nm : ident) ?(poly=PolyFlags.default) (ty : term) : kername tm =
   fun ~st env evm success _fail ->
     let kind = Decls.(IsDefinition Definition) in
     let hole = CAst.make (Constrexpr.CHole (Some Evar_kinds.(GQuestionMark default_question_mark))) in

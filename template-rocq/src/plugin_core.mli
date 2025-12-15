@@ -47,9 +47,9 @@ val tmFailString : string -> 'a tm
 val reduce : Environ.env -> Evd.evar_map -> reduction_strategy -> term -> Evd.evar_map * term
 val tmEval : reduction_strategy -> term -> term tm
 
-val tmDefinition : ident -> ?poly:bool -> ?opaque:bool -> term option -> term -> kername tm
-val tmAxiom : ident -> ?poly:bool -> term -> kername tm
-val tmLemma : ident -> ?poly:bool -> term -> kername tm
+val tmDefinition : ident -> ?poly:PolyFlags.t -> ?opaque:bool -> term option -> term -> kername tm
+val tmAxiom : ident -> ?poly:PolyFlags.t -> term -> kername tm
+val tmLemma : ident -> ?poly:PolyFlags.t -> term -> kername tm
 
 val tmFreshName : ident -> ident tm
 
