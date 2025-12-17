@@ -63,15 +63,15 @@ type location =
 
 (** val location_rect : 'a1 -> (comparison -> 'a1) -> location -> 'a1 **)
 
-let location_rect f f0 = function
-| Coq_loc_Exact -> f
-| Coq_loc_Inexact c -> f0 c
+let location_rect loc_Exact loc_Inexact = function
+| Coq_loc_Exact -> loc_Exact
+| Coq_loc_Inexact c -> loc_Inexact c
 
 (** val location_rec : 'a1 -> (comparison -> 'a1) -> location -> 'a1 **)
 
-let location_rec f f0 = function
-| Coq_loc_Exact -> f
-| Coq_loc_Inexact c -> f0 c
+let location_rec loc_Exact loc_Inexact = function
+| Coq_loc_Exact -> loc_Exact
+| Coq_loc_Inexact c -> loc_Inexact c
 
 type shr_record = { shr_m : coq_Z; shr_r : bool; shr_s : bool }
 
