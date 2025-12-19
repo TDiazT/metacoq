@@ -113,7 +113,7 @@ sig
   val quote_univ_instance : UVars.Instance.t -> quoted_univ_instance
   val quote_univ_constraints : Univ.UnivConstraints.t -> quoted_univ_constraints
   val quote_univ_context : UVars.UContext.t -> quoted_univ_context
-  val quote_contextset : PConstraints.ContextSet.t -> quoted_contextset
+  val quote_contextset : Univ.ContextSet.t -> quoted_contextset
   val quote_variance : UVars.Variance.t -> quoted_variance
   val quote_abstract_univ_context : UVars.AbstractContext.t -> quoted_abstract_univ_context
 
@@ -231,8 +231,7 @@ struct
         eqs (levels, cstrs)
     in
     let levels = Univ.Level.Set.add Univ.Level.set levels in
-    let cstrs = PConstraints.of_univs cstrs in
-    debug Pp.(fun () -> str"Universe context: " ++ PConstraints.ContextSet.pr Sorts.QVar.raw_pr Univ.Level.raw_pr (levels, cstrs));
+    debug Pp.(fun () -> str"Universe context: " ++ Univ.ContextSet.pr Univ.Level.raw_pr (levels, cstrs));
     time (Pp.str"Quoting universe context")
       (fun uctx -> Q.quote_contextset uctx) (levels, cstrs)
 
@@ -605,7 +604,7 @@ struct
       else
         (debug Pp.(fun () -> str"Skipping universes: ");
          time (Pp.str"Quoting empty universe context")
-           (fun uctx -> Q.quote_contextset uctx) PConstraints.ContextSet.empty)
+           (fun uctx -> Q.quote_contextset uctx) Univ.ContextSet.empty)
     in
     let retro =
       let retro = Environ.retroknowledge env in

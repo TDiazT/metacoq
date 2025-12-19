@@ -277,8 +277,8 @@ struct
     to_coq_list (Lazy.force tVariance) var_list
 
   let quote_contextset uctx =
-    let levels' = quote_levelset (PConstraints.ContextSet.levels uctx) in
-    let const' = quote_univ_constraints (PConstraints.ContextSet.univ_constraints uctx) in
+    let levels' = quote_levelset (Univ.ContextSet.levels uctx) in
+    let const' = quote_univ_constraints (Univ.ContextSet.constraints uctx) in
     pairl tLevelSet tConstraintSet levels' const'
 
   let quote_univ_context uctx =
