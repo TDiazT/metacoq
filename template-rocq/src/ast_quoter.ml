@@ -196,10 +196,10 @@ struct
     let constraints = UVars.UContext.constraints uctx in
     (names, (quote_univ_instance levels, quote_univ_constraints (PConstraints.univs constraints)))
 
-  let quote_contextset (uctx : PConstraints.ContextSet.t) : quoted_contextset =
-    let levels = List.map quote_level (Univ.Level.Set.elements (PConstraints.ContextSet.levels uctx)) in
-    let constraints = PConstraints.ContextSet.constraints uctx in
-    (Universes0.LevelSetProp.of_list levels, quote_univ_constraints (PConstraints.univs constraints))
+  let quote_contextset (uctx : Univ.ContextSet.t) : quoted_contextset =
+    let levels = List.map quote_level (Univ.Level.Set.elements (Univ.ContextSet.levels uctx)) in
+    let constraints = Univ.ContextSet.constraints uctx in
+    (Universes0.LevelSetProp.of_list levels, quote_univ_constraints constraints)
 
   let quote_abstract_univ_context uctx : quoted_abstract_univ_context =
     let {UVars.quals = qnames; UVars.univs = unames} = UVars.AbstractContext.names uctx in
