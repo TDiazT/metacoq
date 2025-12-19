@@ -314,8 +314,7 @@ struct
   let mkPolymorphic_ctx t =
     constr_mkApp (cPolymorphic_ctx, [|t|])
 
-  let mkMonomorphic_entry ctx =
-     constr_mkApp (cMonomorphic_entry, [| ctx |])
+  let mkMonomorphic_entry () = Lazy.force cMonomorphic_entry
 
   let mkPolymorphic_entry ctx =
      constr_mkApp (cPolymorphic_entry, [| ctx |])
@@ -323,8 +322,7 @@ struct
   let quote_inductive_universes uctx =
     match uctx with
     | Entries.Monomorphic_entry ->
-      let ctx = quote_univ_context UVars.UContext.empty in
-      constr_mkApp (cMonomorphic_entry, [| ctx |])
+      mkMonomorphic_entry ()
     | Entries.Polymorphic_entry uctx ->
       let ctx = quote_univ_context uctx in
       constr_mkApp (cPolymorphic_entry, [| ctx |])

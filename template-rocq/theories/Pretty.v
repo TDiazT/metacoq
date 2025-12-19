@@ -303,7 +303,7 @@ Module PrintTermTree.
 
   Definition universes_decl_of_universes_entry e :=
     match e with
-    | Monomorphic_entry ctx => Monomorphic_ctx
+    | Monomorphic_entry => Monomorphic_ctx
     | Polymorphic_entry uctx => Polymorphic_ctx (fst uctx, snd (snd uctx))
     end.
 

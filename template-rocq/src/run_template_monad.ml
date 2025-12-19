@@ -214,10 +214,11 @@ let _denote_universes_decl env evm trm (* of type universes_decl *) : _ * univer
 let denote_universes_entry env evm trm (* of type universes_entry *) : _ * UState.universes_entry =
   let (h, args) = app_full trm [] in
   match args with
-  | ctx :: [] -> if constr_equall h cMonomorphic_entry then
-                   let evm, ctx = denote_ucontextset env evm ctx in
-                   evm, UState.Monomorphic_entry ctx
-                 else if constr_equall h cPolymorphic_entry then
+  | [] ->
+    if constr_equall h cMonomorphic_entry then
+      evm, UState.Monomorphic_entry Univ.ContextSet.empty
+    else bad_term_verb trm "denote_universes_entry"
+  | ctx :: [] -> if constr_equall h cPolymorphic_entry then
                    let evm, ctx = denote_ucontext env evm ctx in
                    evm, UState.Polymorphic_entry ctx
                  else

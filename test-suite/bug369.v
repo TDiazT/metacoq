@@ -26,7 +26,7 @@ Definition mut_pt_i : mutual_inductive_entry :=
   mind_entry_params := [{| decl_name := bnamed "A"; decl_body := None;
                          decl_type := (tSort Sort.type0) |}];
   mind_entry_inds := [one_pt_i];
-  mind_entry_universes := Monomorphic_entry ContextSet.empty;
+  mind_entry_universes := Monomorphic_entry;
   mind_entry_template := false;
   mind_entry_variance := None;
   mind_entry_private := None;

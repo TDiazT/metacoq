@@ -410,7 +410,7 @@ struct
        ConstructRef (quote_inductive (kn,n), k)
 
   let mkPolymorphic_entry c = Universes0.Polymorphic_entry c
-  let mkMonomorphic_entry c = Universes0.Monomorphic_entry c
+  let mkMonomorphic_entry () = Universes0.Monomorphic_entry
 
 end
 
