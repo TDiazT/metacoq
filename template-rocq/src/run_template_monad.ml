@@ -317,8 +317,7 @@ let declare_inductive (env: Environ.env) (evm: Evd.evar_map) (infer_univs : bool
                           Univ.ContextSet.pr UnivNames.pr_level_with_global_universes ctx))
       in
       let () = Global.push_context_set ctx in
-      let ctx = PConstraints.ContextSet.of_univ_context_set ctx in
-      Evd.merge_context_set Evd.UnivRigid evm ctx, mind
+      Evd.merge_universe_context_set Evd.UnivRigid evm ctx, mind
     else evm, mind
   in
   let names = (UState.Monomorphic_entry Univ.ContextSet.empty, UnivNames.empty_binders) in
