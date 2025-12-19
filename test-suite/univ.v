@@ -89,7 +89,7 @@ Set Printing Universes.
 
 Definition clean_universes_entry e :=
   match e with
-  | Monomorphic_entry e => Monomorphic_entry e
+  | Monomorphic_entry => Monomorphic_entry
   | Polymorphic_entry (names, ci) => Polymorphic_entry (map (fun x => nAnon) names, ci)
   end.
 

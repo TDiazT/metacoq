@@ -117,7 +117,7 @@ sig
   val quote_variance : UVars.Variance.t -> quoted_variance
   val quote_abstract_univ_context : UVars.AbstractContext.t -> quoted_abstract_univ_context
 
-  val mkMonomorphic_entry : quoted_contextset -> quoted_universes_entry
+  val mkMonomorphic_entry : unit -> quoted_universes_entry
   val mkPolymorphic_entry : quoted_univ_context -> quoted_universes_entry
 
   val mkMonomorphic_ctx : unit -> quoted_universes_decl
@@ -196,7 +196,7 @@ struct
     | Polymorphic ctx -> UVars.AbstractContext.repr ctx
 
   let quote_universes_entry = function
-    | Monomorphic_entry -> Q.mkMonomorphic_entry (Q.quote_contextset PConstraints.ContextSet.empty)
+    | Monomorphic_entry -> Q.mkMonomorphic_entry ()
     | Polymorphic_entry ctx -> Q.mkPolymorphic_entry (Q.quote_univ_context ctx)
 
   let quote_universes_decl decl templ =

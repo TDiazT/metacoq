@@ -66,7 +66,7 @@ MetaRocq Run
                        ; mind_entry_lc := tProd nAnon <% bool %> (tRel 1) ::
                                           tProd nAnon <% string %> (tRel 1) :: nil
                        |} :: nil
-                  ; mind_entry_universes := Monomorphic_entry ContextSet.empty
+                  ; mind_entry_universes := Monomorphic_entry
                   ; mind_entry_template := false
                   ; mind_entry_variance := None
                   ; mind_entry_private := None |}).

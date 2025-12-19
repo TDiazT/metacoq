@@ -2692,14 +2692,14 @@ Definition string_of_universe_instance u :=
   string_of_list string_of_level u.
 
 Inductive universes_entry :=
-| Monomorphic_entry (ctx : ContextSet.t)
+| Monomorphic_entry
 | Polymorphic_entry (ctx : UContext.t).
 Derive NoConfusion for universes_entry.
 
 Definition universes_entry_of_decl (u : universes_decl) : universes_entry :=
   match u with
   | Polymorphic_ctx ctx => Polymorphic_entry (Universes.AUContext.repr ctx)
-  | Monomorphic_ctx => Monomorphic_entry ContextSet.empty
+  | Monomorphic_ctx => Monomorphic_entry
   end.
 
 Definition polymorphic_instance uctx :=
