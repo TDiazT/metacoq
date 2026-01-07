@@ -75,7 +75,7 @@ let retypecheck_term_dependencies ~opaque_access env gr =
   in
   let st = Conv_oracle.get_transp_state (Environ.oracle (Global.env())) in
   let deps = Assumptions.assumptions ~add_opaque:true ~add_transparent:true opaque_access
-      st gr (fst (UnivGen.fresh_global_instance env gr)) in
+      st [gr] in
   let process_object k _ty =
     let open Printer in
     match k with
