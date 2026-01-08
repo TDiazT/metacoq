@@ -272,7 +272,7 @@ module RetypeMindEntry =
       | Entries.Template_ind_entry uctx -> evm
       | Entries.Polymorphic_ind_entry uctx ->
         let (qs, qcst), (us, ucst) = UVars.UContext.to_context_set uctx in
-        Evd.merge_sort_context_set (UState.UnivFlexible false) QGraph.Internal evm ((qs, us), (qcst, ucst))
+        Evd.merge_sort_context_set (UState.UnivFlexible false) evm ((qs, us), (qcst, ucst))
     in
     let evm, mind = infer_mentry_univs env evm mind in
     let evm = Evd.minimize_universes evm in
